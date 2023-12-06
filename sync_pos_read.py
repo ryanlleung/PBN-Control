@@ -30,8 +30,8 @@ CT_PRESENT_INPUT_VOLTAGE =  144
 CT_PRESENT_TEMPERATURE =    146
 
 # Data Byte Length
-LEN_PRO_GOAL_POSITION       = 4
-LEN_PRO_PRESENT_POSITION    = 4
+LEN_GOAL_POSITION       = 4
+LEN_PRESENT_POSITION    = 4
 
 # Protocol version
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
@@ -107,22 +107,63 @@ def turn_led_off(id):
     elif dxl_error != 0:
         print("%s" % packet_handler.getRxPacketError(dxl_error))
 
+sync_read_position = GroupSyncRead(port_handler, packet_handler, 
+                                   CT_PRESENT_POSITION, LEN_PRESENT_POSITION)
+def read_present_position(id):
+    sync_read_position.clearParam()
+
+    addparam_result = sync_read_position.addParam(id)
+    if addparam_result != True:
+        print("[ID:%03d] groupSyncRead addparam failed" % id)
+        quit()
+
+    comm_result = sync_read_position.txRxPacket()
+    if comm_result != COMM_SUCCESS:
+        print("%s" % packet_handler.getTxRxResult(comm_result))
+
+    getdata_result = sync_read_position.isAvailable(id, CT_PRESENT_POSITION, LEN_PRESENT_POSITION)
+    if getdata_result != True:
+        print("[ID:%03d] groupSyncRead getdata failed" % id)
+        quit()
+
+    dxl_present_position = sync_read_position.getData(id, CT_PRESENT_POSITION, LEN_PRESENT_POSITION)
+    return dxl_present_position
+
+sync_write_position = GroupSyncWrite(port_handler, packet_handler, 
+                                     CT_GOAL_POSITION, LEN_GOAL_POSITION)
+def write_goal_position(id, pos):
+    sync_write_position.clearParam()
+
+    goal_position = [DXL_LOBYTE(DXL_LOWORD(pos)), DXL_HIBYTE(DXL_LOWORD(pos)), 
+                     DXL_LOBYTE(DXL_HIWORD(pos)), DXL_HIBYTE(DXL_HIWORD(pos))]
+    addparam_result = sync_write_position.addParam(id, goal_position)
+    if addparam_result != True:
+        print("[ID:%03d] groupSyncWrite addparam failed" % id)
+        quit()
+
+    comm_result = sync_write_position.txPacket()
+    if comm_result != COMM_SUCCESS:
+        print("%s" % packet_handler.getTxRxResult(comm_result))
+
+    
+#### Main ####
+
 open_port()
 set_baudrate()
 enable_torque(DXL1_ID)
 enable_torque(DXL2_ID)
 
+pos1 = read_present_position(DXL1_ID)
+pos2 = read_present_position(DXL2_ID)
+print(f"pos1: {pos1}, pos2: {pos2}")
 
+write_goal_position(DXL1_ID, pos1 + 100)
+write_goal_position(DXL2_ID, pos2 + 100)
+time.sleep(5)
 
-turn_led_on(DXL1_ID)
-time.sleep(1)
-turn_led_on(DXL2_ID)
-time.sleep(1)
-turn_led_off(DXL1_ID)
-time.sleep(1)
-turn_led_off(DXL2_ID)
-
-
+pos1 = read_present_position(DXL1_ID)
+pos2 = read_present_position(DXL2_ID)
+print(f"pos1: {pos1}, pos2: {pos2}")
 
 disable_torque(DXL1_ID)
 disable_torque(DXL2_ID)

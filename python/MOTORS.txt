@@ -1,0 +1,2 @@
+COM3, 57600 bps, Protocol 2.0, ID: 1
+COM3, 57600 bps, Protocol 2.0, ID: 4

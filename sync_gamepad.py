@@ -2,6 +2,7 @@
 import os
 import time
 from dynamixel_sdk import *                    # Uses Dynamixel SDK library
+from inputs import get_gamepad
 
 
 # Control table address
@@ -209,17 +210,25 @@ dnx.open_port()
 dnx.enable_torque(DXL1_ID)
 dnx.enable_torque(DXL2_ID)
 
-dnx.set_velocity(DXL1_ID, -20)
-dnx.set_velocity(DXL2_ID, 20)
+try:
+    breaker = False
+    while True:
+        events = get_gamepad()
+        for event in events:
+            if event.ev_type == "Key":
+                if event.code == "BTN_SELECT":
+                    breaker = True
+                    break
+            elif event.ev_type == "Absolute":
+                if event.code == "ABS_Z":
+                    dnx.set_velocity(DXL1_ID, int(-event.state*2))
+                elif event.code == "ABS_RZ":
+                    dnx.set_velocity(DXL2_ID, int(event.state*2))
+        if breaker:
+            break
 
-k=0
-while k<30:
-    print(f"Vel1: {dnx.get_velocity(DXL1_ID)}\tVel2: {dnx.get_velocity(DXL2_ID)}")
-    time.sleep(0.1)
-    k+=1
-
-dnx.set_velocity(DXL1_ID, 0)
-dnx.set_velocity(DXL2_ID, 0)
+except KeyboardInterrupt:
+    pass
 
 dnx.disable_torque(DXL1_ID)
 dnx.disable_torque(DXL2_ID)

@@ -1,11 +1,8 @@
 
 import os
 import time
-import msvcrt
 from dynamixel_sdk import *                    # Uses Dynamixel SDK library
 
-def getch():
-    return msvcrt.getch().decode()
 
 # Control table address
 CT_OPERATING_MODE =         11
@@ -40,19 +37,12 @@ LEN_PRESENT_VELOCITY    = 4
 # Protocol version
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
 
-# Default setting
+# Device setting
 DXL1_ID                     = 1                 # Dynamixel#1 ID : 1
 DXL2_ID                     = 4                 # Dynamixel#1 ID : 2
 BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
 DEVICENAME                  = 'COM3'            # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
-
-# TORQUE_ENABLE               = 1                 # Value for enabling the torque
-# TORQUE_DISABLE              = 0                 # Value for disabling the torque
-# DXL_MINIMUM_POSITION_VALUE  = 100               # Dynamixel will rotate between this value
-# DXL_MAXIMUM_POSITION_VALUE  = 4000              # and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
-# DXL_MOVING_STATUS_THRESHOLD = 20                # Dynamixel moving status threshold
-
 
 #### Initialisation ####
 
@@ -85,57 +75,60 @@ class Dynamixel:
 
     def close_port(self):
         self.port_handler.closePort()
+        print("Port closed successfully")
 
-    def set_mode(self, id, mode="position"):
+    def _write_register(self, id, address, value):
+        comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, address, value)
+        if comm_result != COMM_SUCCESS:
+            print("%s" % self.packet_handler.getTxRxResult(comm_result))
+        elif error != 0:
+            print("%s" % self.packet_handler.getRxPacketError(error))        
+
+    #### Torque & Mode ####
+
+    def _set_torque(self, id, enable):
+        value = 1 if enable else 0
+        self._write_register(id, CT_TORQUE_ENABLE, value)
+
+    def enable_torque(self, id):
+        self._set_torque(id, True)
+        print(f"Torque enabled for ID {id}")
+
+    def disable_torque(self, id):
+        self._set_torque(id, False)
+        print(f"Torque disabled for ID {id}")
+
+    def set_mode(self, id, mode="pos"):
         self.disable_torque(id)
-        if mode == "position":
-            comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, CT_OPERATING_MODE, 3)
-        elif mode == "velocity":
-            comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, CT_OPERATING_MODE, 1)
-        elif mode == "current":
-            comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, CT_OPERATING_MODE, 0)
+        if mode == "pos":
+            self._write_register(id, CT_OPERATING_MODE, 3)
+            print(f"Position mode set for ID {id}")
+        elif mode == "vel":
+            self._write_register(id, CT_OPERATING_MODE, 1)
+            print(f"Velocity mode set for ID {id}")
+        elif mode == "cur":
+            self._write_register(id, CT_OPERATING_MODE, 0)
+            print(f"Current mode set for ID {id}")
         else:
             print("Invalid mode")
             quit()
-        if comm_result != COMM_SUCCESS:
-            print("%s" % self.packet_handler.getTxRxResult(comm_result))
-        elif error != 0:
-            print("%s" % self.packet_handler.getRxPacketError(error))
         self.enable_torque(id)
 
-    def enable_torque(self, id):
-        comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, CT_TORQUE_ENABLE, 1)
-        if comm_result != COMM_SUCCESS:
-            print("%s" % self.packet_handler.getTxRxResult(comm_result))
-        elif error != 0:
-            print("%s" % self.packet_handler.getRxPacketError(error))
-        else:
-            print("Dynamixel#%d has been successfully connected" % id)
+    #### LED ####
 
-    def disable_torque(self, id):
-        comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, CT_TORQUE_ENABLE, 0)
-        if comm_result != COMM_SUCCESS:
-            print("%s" % self.packet_handler.getTxRxResult(comm_result))
-        elif error != 0:
-            print("%s" % self.packet_handler.getRxPacketError(error))
-        else:
-            print("Dynamixel#%d has been successfully disconnected" % id)
+    def _set_LED(self, id, enable):
+        value = 1 if enable else 0
+        self._write_register(id, CT_LED, value)
 
-    def turn_led_on(self, id):
-        comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, CT_LED, 1)
-        if comm_result != COMM_SUCCESS:
-            print("%s" % self.packet_handler.getTxRxResult(comm_result))
-        elif error != 0:
-            print("%s" % self.packet_handler.getRxPacketError(error))
+    def turn_LED_on(self, id):
+        self._set_LED(id, True)
 
-    def turn_led_off(self, id):
-        comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, CT_LED, 0)
-        if comm_result != COMM_SUCCESS:
-            print("%s" % self.packet_handler.getTxRxResult(comm_result))
-        elif error != 0:
-            print("%s" % self.packet_handler.getRxPacketError(error))
+    def turn_LED_off(self, id):
+        self._set_LED(id, False)
 
-    def get_present_position(self, id):
+    #### Position ####
+
+    def get_position(self, id):
         self.sync_read_position.clearParam()
         add_param_result = self.sync_read_position.addParam(id)
         if add_param_result != True:
@@ -149,9 +142,13 @@ class Dynamixel:
             print("[ID:%03d] groupSyncRead getdata failed" % id)
             quit()
         position = self.sync_read_position.getData(id, CT_PRESENT_POSITION, LEN_PRESENT_POSITION)
+        # Convert to signed int
+        if position > 2147483648:
+            position -= 4294967296
         return position
 
-    def set_goal_position(self, id, position):
+    def set_position(self, id, position):
+        self.set_mode(id, "pos")
         self.sync_write_position.clearParam()
         position_byte = [DXL_LOBYTE(DXL_LOWORD(position)), DXL_HIBYTE(DXL_LOWORD(position)), 
                          DXL_LOBYTE(DXL_HIWORD(position)), DXL_HIBYTE(DXL_HIWORD(position))]
@@ -163,7 +160,9 @@ class Dynamixel:
         if comm_result != COMM_SUCCESS:
             print("%s" % self.packet_handler.getTxRxResult(comm_result))
 
-    def get_present_velocity(self, id):
+    #### Velocity ####
+
+    def get_velocity(self, id):
         self.sync_read_velocity.clearParam()
         add_param_result = self.sync_read_velocity.addParam(id)
         if add_param_result != True:
@@ -177,9 +176,13 @@ class Dynamixel:
             print("[ID:%03d] groupSyncRead getdata failed" % id)
             quit()
         velocity = self.sync_read_velocity.getData(id, CT_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY)
+        # Convert to signed int
+        if velocity > 2147483648:
+            velocity -= 4294967296
         return velocity
 
-    def set_goal_velocity(self, id, velocity):
+    def set_velocity(self, id, velocity):
+        self.set_mode(id, "vel")
         self.sync_write_velocity.clearParam()
         velocity_byte = [DXL_LOBYTE(DXL_LOWORD(velocity)), DXL_HIBYTE(DXL_LOWORD(velocity)), 
                          DXL_LOBYTE(DXL_HIWORD(velocity)), DXL_HIBYTE(DXL_HIWORD(velocity))]
@@ -191,6 +194,7 @@ class Dynamixel:
         if comm_result != COMM_SUCCESS:
             print("%s" % self.packet_handler.getTxRxResult(comm_result))
 
+
 #### Main ####
 
 dnx = Dynamixel()
@@ -199,14 +203,17 @@ dnx.open_port()
 dnx.enable_torque(DXL1_ID)
 dnx.enable_torque(DXL2_ID)
 
-dnx.set_mode(DXL2_ID, "velocity")
-dnx.set_goal_velocity(DXL2_ID, 200)
-t0 = time.time()
-while True:
-    print(dnx.get_present_velocity(DXL2_ID), dnx.get_present_position(DXL2_ID))
-    time.sleep(0.1)
+dnx.set_velocity(DXL1_ID, -20)
+dnx.set_velocity(DXL2_ID, 20)
 
-dnx.set_goal_velocity(DXL2_ID, 0)
+k=0
+while k<30:
+    print(f"Vel1: {dnx.get_velocity(DXL1_ID)}\tVel2: {dnx.get_velocity(DXL2_ID)}")
+    time.sleep(0.1)
+    k+=1
+
+dnx.set_velocity(DXL1_ID, 0)
+dnx.set_velocity(DXL2_ID, 0)
 
 dnx.disable_torque(DXL1_ID)
 dnx.disable_torque(DXL2_ID)

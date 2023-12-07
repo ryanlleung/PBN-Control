@@ -64,7 +64,7 @@ class Dynamixel:
 
     def open_port(self, BAUDRATE=57600):
         if self.port_handler.openPort():
-            print("Port opened successfully")
+            print("\nPort opened successfully")
         else:
             print("Failed to open the port")
             quit()
@@ -77,8 +77,9 @@ class Dynamixel:
 
     def close_port(self):
         self.port_handler.closePort()
-        print("Port closed successfully")
+        print("Port closed successfully\n")
 
+    # Write a 1-byte value to a register
     def _write_register(self, id, address, value):
         comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, address, value)
         if comm_result != COMM_SUCCESS:
@@ -210,25 +211,34 @@ dnx.open_port()
 dnx.enable_torque(DXL1_ID)
 dnx.enable_torque(DXL2_ID)
 
+last_check_time = time.time()
+check_interval = 0  # Adjust the check interval as needed
+last_values = {"ABS_Y": 0, "ABS_RY": 0}  # Initialize the last known values
+
+def set_velocity(event, last_value, motor_id):
+    if event.state != last_value:
+        last_value = event.state
+        drive_value = int(-event.state / 150) if motor_id == DXL1_ID else int(event.state / 150)
+        if -10 < drive_value < 10:
+            drive_value = 0
+        print(f"Drive value: {drive_value}")
+        dnx.set_velocity(motor_id, drive_value)
+
 try:
-    breaker = False
     while True:
-        events = get_gamepad()
-        for event in events:
-            if event.ev_type == "Key":
-                if event.code == "BTN_SELECT":
-                    breaker = True
-                    break
-            elif event.ev_type == "Absolute":
-                if event.code == "ABS_Z":
-                    dnx.set_velocity(DXL1_ID, int(-event.state*2))
-                elif event.code == "ABS_RZ":
-                    dnx.set_velocity(DXL2_ID, int(event.state*2))
-        if breaker:
-            break
+        current_time = time.time()
+        if current_time - last_check_time >= check_interval:
+            last_check_time = current_time
+            events = get_gamepad()
+            for event in events:
+                if event.ev_type == "Absolute":
+                    if event.code == "ABS_Y":
+                        set_velocity(event, last_values["ABS_Y"], DXL1_ID)
+                    elif event.code == "ABS_RY":
+                        set_velocity(event, last_values["ABS_RY"], DXL2_ID)
 
 except KeyboardInterrupt:
-    pass
+    print("Keyboard interrupt")
 
 dnx.disable_torque(DXL1_ID)
 dnx.disable_torque(DXL2_ID)

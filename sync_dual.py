@@ -1,6 +1,5 @@
+# Description: Synchronous control of two Dynamixel motors
 
-import os
-import time
 from dynamixel_sdk import *                    # Uses Dynamixel SDK library
 
 
@@ -203,24 +202,26 @@ class Dynamixel:
 
 #### Main ####
 
-dnx = Dynamixel()
-dnx.open_port()
+if __name__ == "__main__":
 
-dnx.enable_torque(DXL1_ID)
-dnx.enable_torque(DXL2_ID)
+    dnx = Dynamixel()
+    dnx.open_port()
 
-dnx.set_velocity(DXL1_ID, -20)
-dnx.set_velocity(DXL2_ID, 20)
+    dnx.enable_torque(DXL1_ID)
+    dnx.enable_torque(DXL2_ID)
 
-k=0
-while k<30:
-    print(f"Vel1: {dnx.get_velocity(DXL1_ID)}\tVel2: {dnx.get_velocity(DXL2_ID)}")
-    time.sleep(0.1)
-    k+=1
+    dnx.set_velocity(DXL1_ID, -20)
+    dnx.set_velocity(DXL2_ID, 20)
 
-dnx.set_velocity(DXL1_ID, 0)
-dnx.set_velocity(DXL2_ID, 0)
+    k=0
+    while k<30:
+        print(f"Vel1: {dnx.get_velocity(DXL1_ID)}\tVel2: {dnx.get_velocity(DXL2_ID)}")
+        time.sleep(0.1)
+        k+=1
 
-dnx.disable_torque(DXL1_ID)
-dnx.disable_torque(DXL2_ID)
-dnx.close_port()
+    dnx.set_velocity(DXL1_ID, 0)
+    dnx.set_velocity(DXL2_ID, 0)
+
+    dnx.disable_torque(DXL1_ID)
+    dnx.disable_torque(DXL2_ID)
+    dnx.close_port()

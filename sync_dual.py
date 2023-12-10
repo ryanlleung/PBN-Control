@@ -101,10 +101,12 @@ class Dynamixel:
 
     def enable_torque(self, id):
         self._set_torque(id, True)
+        self.turn_LED_on(id)
         print(f"Torque enabled for ID {id}")
 
     def disable_torque(self, id):
         self._set_torque(id, False)
+        self.turn_LED_off(id)
         print(f"Torque disabled for ID {id}")
 
     def set_mode(self, id, mode):

@@ -19,18 +19,21 @@ from PyQt5.QtMultimediaWidgets import *
 # Handle communication with the gamepad
 class GamepadThread(QThread):
     
-    def __init__(self, dnx, motor1_vel_value, motor2_vel_value):
+    def __init__(self, dnx, 
+                 motor1_switch, motor1_vel_value,
+                 motor2_switch, motor2_vel_value,):
         super().__init__()
         self.daemon = True
         self.dnx = dnx
+        self.motor1_switch = motor1_switch
         self.motor1_vel_value = motor1_vel_value
+        self.motor2_switch = motor2_switch
         self.motor2_vel_value = motor2_vel_value
         
     def run(self):
         while True:
             events = get_gamepad()
             for event in events:
-                if event.ev_type != 'Absolute': continue
                 if event.code == 'ABS_Y':
                     drive_value = int(-event.state / 150)
                     if -15 < drive_value < 15:
@@ -41,6 +44,12 @@ class GamepadThread(QThread):
                     if -15 < drive_value < 15:
                         drive_value = 0
                     self.motor2_vel_value.setText(str(drive_value))
+                elif event.code == 'BTN_START':
+                    if event.state == 1:
+                        self.motor1_switch.toggle()
+                elif event.code == 'BTN_SELECT':
+                    if event.state == 1:
+                        self.motor2_switch.toggle()
 
 # Handle communication with the Dynamixel motors                    
 class CommsThread(QThread):
@@ -109,7 +118,9 @@ class MainWindow(QWidget):
         self.dnx.enable_torque(DXL2_ID)
         self.initUI()
         self.gamepad_thread = GamepadThread(self.dnx,
+                                            self.motor1_switch,
                                             self.motor1_vel_value,
+                                            self.motor2_switch,
                                             self.motor2_vel_value)
         self.gamepad_thread.start()
         self.comms_thread = CommsThread(self.dnx,

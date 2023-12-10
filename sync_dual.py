@@ -32,6 +32,9 @@ LEN_GOAL_POSITION       = 4
 LEN_PRESENT_POSITION    = 4
 LEN_GOAL_VELOCITY       = 4
 LEN_PRESENT_VELOCITY    = 4
+LEN_PRESENT_CURRENT     = 2
+LEN_PRESENT_INPUT_VOLTAGE = 2
+LEN_PRESENT_TEMPERATURE = 2
 
 # Protocol version
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
@@ -54,11 +57,17 @@ class Dynamixel:
         self.sync_read_position = GroupSyncRead(self.port_handler, self.packet_handler, 
                                                 CT_PRESENT_POSITION, LEN_PRESENT_POSITION)
         self.sync_write_position = GroupSyncWrite(self.port_handler, self.packet_handler,
-                                                CT_GOAL_POSITION, LEN_GOAL_POSITION)
+                                                  CT_GOAL_POSITION, LEN_GOAL_POSITION)
         self.sync_read_velocity = GroupSyncRead(self.port_handler, self.packet_handler,
                                                 CT_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY)
         self.sync_write_velocity = GroupSyncWrite(self.port_handler, self.packet_handler,
-                                                CT_GOAL_VELOCITY, LEN_GOAL_VELOCITY)
+                                                  CT_GOAL_VELOCITY, LEN_GOAL_VELOCITY)
+        self.sync_read_current = GroupSyncRead(self.port_handler, self.packet_handler,
+                                                  CT_PRESENT_CURRENT, LEN_PRESENT_CURRENT)
+        self.sync_read_voltage = GroupSyncRead(self.port_handler, self.packet_handler,
+                                               CT_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
+        self.sync_read_temperature = GroupSyncRead(self.port_handler, self.packet_handler,
+                                                   CT_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
 
     def open_port(self, BAUDRATE=57600):
         if self.port_handler.openPort():
@@ -130,6 +139,59 @@ class Dynamixel:
 
     def turn_LED_off(self, id):
         self._set_LED(id, False)
+        
+    ### Information ###
+    
+    def get_current(self, id):
+        self.sync_read_current.clearParam()
+        add_param_result = self.sync_read_current.addParam(id)
+        if add_param_result != True:
+            print("[ID:%03d] groupSyncRead addparam failed" % id)
+            quit()
+        comm_result = self.sync_read_current.txRxPacket()
+        if comm_result != COMM_SUCCESS:
+            print("%s" % self.packet_handler.getTxRxResult(comm_result))
+        getdata_result = self.sync_read_current.isAvailable(id, CT_PRESENT_CURRENT, LEN_PRESENT_CURRENT)
+        if getdata_result != True:
+            print("[ID:%03d] groupSyncRead getdata failed" % id)
+            quit()
+        current = self.sync_read_current.getData(id, CT_PRESENT_CURRENT, LEN_PRESENT_CURRENT)
+        # Convert to signed int
+        if current > 32768:
+            current -= 65536
+        return current
+    
+    def get_voltage(self, id):
+        self.sync_read_voltage.clearParam()
+        add_param_result = self.sync_read_voltage.addParam(id)
+        if add_param_result != True:
+            print("[ID:%03d] groupSyncRead addparam failed" % id)
+            quit()
+        comm_result = self.sync_read_voltage.txRxPacket()
+        if comm_result != COMM_SUCCESS:
+            print("%s" % self.packet_handler.getTxRxResult(comm_result))
+        getdata_result = self.sync_read_voltage.isAvailable(id, CT_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
+        if getdata_result != True:
+            print("[ID:%03d] groupSyncRead getdata failed" % id)
+            quit()
+        voltage = self.sync_read_voltage.getData(id, CT_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
+        return voltage
+    
+    def get_temperature(self, id):
+        self.sync_read_temperature.clearParam()
+        add_param_result = self.sync_read_temperature.addParam(id)
+        if add_param_result != True:
+            print("[ID:%03d] groupSyncRead addparam failed" % id)
+            quit()
+        comm_result = self.sync_read_temperature.txRxPacket()
+        if comm_result != COMM_SUCCESS:
+            print("%s" % self.packet_handler.getTxRxResult(comm_result))
+        getdata_result = self.sync_read_temperature.isAvailable(id, CT_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
+        if getdata_result != True:
+            print("[ID:%03d] groupSyncRead getdata failed" % id)
+            quit()
+        temperature = self.sync_read_temperature.getData(id, CT_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
+        return temperature
 
     #### Position ####
 

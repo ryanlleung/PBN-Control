@@ -217,6 +217,7 @@ class Dynamixel:
         return position
 
     def set_position(self, id, position):
+        position = int(position)
         self.set_mode(id, "pos")
         self.sync_write_position.clearParam()
         position_byte = [DXL_LOBYTE(DXL_LOWORD(position)), DXL_HIBYTE(DXL_LOWORD(position)), 
@@ -251,6 +252,7 @@ class Dynamixel:
         return velocity
 
     def set_velocity(self, id, velocity):
+        velocity = int(velocity)
         self.set_mode(id, "vel")
         self.sync_write_velocity.clearParam()
         velocity_byte = [DXL_LOBYTE(DXL_LOWORD(velocity)), DXL_HIBYTE(DXL_LOWORD(velocity)), 
@@ -262,7 +264,29 @@ class Dynamixel:
         comm_result = self.sync_write_velocity.txPacket()
         if comm_result != COMM_SUCCESS:
             print("%s" % self.packet_handler.getTxRxResult(comm_result))
-
+            
+    #### Higher Level ####
+    
+    def set_dualvel(self, vel1, vel2, t, brake=True):
+        BUFF = 0.2
+        if t < BUFF:
+            print(f"Time must be greater than {BUFF}s")
+            self.set_velocity(DXL1_ID, 0)
+            self.set_velocity(DXL2_ID, 0)
+            return
+        self.set_velocity(DXL1_ID, -vel1)
+        self.set_velocity(DXL2_ID, vel2)
+        time.sleep(t-BUFF)
+        if brake:
+            self.set_velocity(DXL1_ID, 0)
+            self.set_velocity(DXL2_ID, 0)
+            time.sleep(BUFF)
+        else:
+            self.disable_torque(DXL1_ID)
+            self.disable_torque(DXL2_ID)
+            time.sleep(BUFF)
+            self.enable_torque(DXL1_ID)
+            self.enable_torque(DXL2_ID)
 
 #### Main ####
 
@@ -274,17 +298,13 @@ if __name__ == "__main__":
     dnx.enable_torque(DXL1_ID)
     dnx.enable_torque(DXL2_ID)
 
-    dnx.set_velocity(DXL1_ID, -20)
-    dnx.set_velocity(DXL2_ID, 20)
-
-    k=0
-    while k<30:
-        print(f"Vel1: {dnx.get_velocity(DXL1_ID)}\tVel2: {dnx.get_velocity(DXL2_ID)}")
-        time.sleep(0.1)
-        k+=1
-
-    dnx.set_velocity(DXL1_ID, 0)
-    dnx.set_velocity(DXL2_ID, 0)
+    dnx.set_dualvel(50, 50, 1)
+    dnx.set_dualvel(-50, -50, 1.05)
+    dnx.set_dualvel(50, 0, 1)
+    dnx.set_dualvel(-50, 0, 1.05)
+    dnx.set_dualvel(0, 50, 1)
+    dnx.set_dualvel(0, -50, 1.2)
+    
 
     dnx.disable_torque(DXL1_ID)
     dnx.disable_torque(DXL2_ID)

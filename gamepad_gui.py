@@ -2,7 +2,6 @@
 import base64
 import os
 import time
-import threading
 import sys
 
 from inputs import get_gamepad
@@ -35,12 +34,12 @@ class GamepadThread(QThread):
             events = get_gamepad()
             for event in events:
                 if event.code == 'ABS_Y':
-                    drive_value = int(-event.state / 150)
+                    drive_value = int(-event.state / 500) ## change scaler here
                     if -15 < drive_value < 15:
                         drive_value = 0
                     self.motor1_vel_value.setText(str(drive_value))
                 elif event.code == 'ABS_RY':
-                    drive_value = int(event.state / 150)
+                    drive_value = int(event.state / 500) ## change scaler here
                     if -15 < drive_value < 15:
                         drive_value = 0
                     self.motor2_vel_value.setText(str(drive_value))
@@ -251,6 +250,30 @@ class MainWindow(QWidget):
         QApplication.setStyle(QStyleFactory.create('Fusion'))
         self.setWindowTitle("GUI")
         self.show()
+        
+    def keyPressEvent(self, event):
+        boost_multiplier = 2 if event.modifiers() & Qt.ShiftModifier else 1
+
+        if event.key() == Qt.Key_Q:
+            self.motor1_vel_value.setText(str(50 * boost_multiplier))
+        elif event.key() == Qt.Key_W:
+            self.motor1_vel_value.setText(str(-50 * boost_multiplier))
+        elif event.key() == Qt.Key_S:
+            self.motor2_vel_value.setText(str(50 * boost_multiplier))
+        elif event.key() == Qt.Key_A:
+            self.motor2_vel_value.setText(str(-50 * boost_multiplier))
+        elif event.key() == Qt.Key_T:
+            self.motor1_switch.toggle()
+        elif event.key() == Qt.Key_Y:
+            self.motor2_switch.toggle()
+        elif event.key() == Qt.Key_Escape:
+            QApplication.quit()
+
+    def keyReleaseEvent(self, event):
+        if event.key() in [Qt.Key_Q, Qt.Key_W]:
+            self.motor1_vel_value.setText('0')
+        elif event.key() in [Qt.Key_A, Qt.Key_S]:
+            self.motor2_vel_value.setText('0')
     
     def closeEvent(self, event):
         self.comms_thread.terminate()

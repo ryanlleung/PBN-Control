@@ -40,8 +40,8 @@ LEN_PRESENT_TEMPERATURE = 2
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
 
 # Device setting
-DXL1_ID                     = 2                 # Dynamixel#1 ID : 1
-DXL2_ID                     = 3                 # Dynamixel#1 ID : 2
+DXL1_ID                     = 1                 # Dynamixel#1 ID : 1
+DXL2_ID                     = 4                 # Dynamixel#1 ID : 2
 BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
 DEVICENAME                  = 'COM3'            # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
@@ -71,20 +71,20 @@ class Dynamixel:
 
     def open_port(self, BAUDRATE=57600):
         if self.port_handler.openPort():
-            print("Port opened successfully")
+            print("Attempting to open port")
         else:
-            print("Failed to open the port")
+            print("Failed to open port")
             quit()
 
         if self.port_handler.setBaudRate(BAUDRATE):
-            print("Baudrate set successfully")
+            print("Attempting to set baudrate")
         else:
             print("Failed to set baudrate")
             quit()
 
     def close_port(self):
         self.port_handler.closePort()
-        print("Port closed successfully")
+        print("Attempting to close port")
 
     def _write_register(self, id, address, value):
         comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, address, value)

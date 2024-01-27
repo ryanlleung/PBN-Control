@@ -40,8 +40,8 @@ LEN_PRESENT_TEMPERATURE = 2
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
 
 # Device setting
-DXL1_ID                     = 1                 # Dynamixel#1 ID : 1
-DXL2_ID                     = 4                 # Dynamixel#1 ID : 2
+DXL1_ID                     = 2                 # Dynamixel#1 ID : 1
+DXL2_ID                     = 3                 # Dynamixel#1 ID : 2
 BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
 DEVICENAME                  = 'COM3'            # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
@@ -297,13 +297,15 @@ if __name__ == "__main__":
 
     dnx.enable_torque(DXL1_ID)
     dnx.enable_torque(DXL2_ID)
+    
+    dnx.set_dualvel(200, 176, 3)
 
-    dnx.set_dualvel(50, 50, 1)
-    dnx.set_dualvel(-50, -50, 1.05)
-    dnx.set_dualvel(50, 0, 1)
-    dnx.set_dualvel(-50, 0, 1.05)
-    dnx.set_dualvel(0, 50, 1)
-    dnx.set_dualvel(0, -50, 1.2)
+    # dnx.set_dualvel(50, 50, 1)
+    # dnx.set_dualvel(-50, -50, 1.05)
+    # dnx.set_dualvel(50, 0, 1)
+    # dnx.set_dualvel(-50, 0, 1.05)
+    # dnx.set_dualvel(0, 50, 1)
+    # dnx.set_dualvel(0, -50, 1.2)
     
 
     dnx.disable_torque(DXL1_ID)

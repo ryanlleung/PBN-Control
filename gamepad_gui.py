@@ -116,12 +116,13 @@ class MainWindow(QWidget):
         self.dnx.enable_torque(DXL1_ID)
         self.dnx.enable_torque(DXL2_ID)
         self.initUI()
-        self.gamepad_thread = GamepadThread(self.dnx,
-                                            self.motor1_switch,
-                                            self.motor1_vel_value,
-                                            self.motor2_switch,
-                                            self.motor2_vel_value)
-        self.gamepad_thread.start()
+        if self.have_gamepad():
+            self.gamepad_thread = GamepadThread(self.dnx,
+                                                self.motor1_switch,
+                                                self.motor1_vel_value,
+                                                self.motor2_switch,
+                                                self.motor2_vel_value)
+            self.gamepad_thread.start()
         self.comms_thread = CommsThread(self.dnx,
                                         self.motor1_switch,
                                         self.motor1_vel_value,
@@ -250,17 +251,25 @@ class MainWindow(QWidget):
         QApplication.setStyle(QStyleFactory.create('Fusion'))
         self.setWindowTitle("GUI")
         self.show()
+
+    def have_gamepad(self):
+        try:
+            events = get_gamepad()
+        except:
+            print("No gamepad found")
+            return False
+        return True
         
     def keyPressEvent(self, event):
         boost_multiplier = 2 if event.modifiers() & Qt.ShiftModifier else 1
 
-        if event.key() == Qt.Key_Q:
+        if event.key() == Qt.Key_W:
             self.motor1_vel_value.setText(str(50 * boost_multiplier))
-        elif event.key() == Qt.Key_W:
+        elif event.key() == Qt.Key_Q:
             self.motor1_vel_value.setText(str(-50 * boost_multiplier))
-        elif event.key() == Qt.Key_S:
-            self.motor2_vel_value.setText(str(50 * boost_multiplier))
         elif event.key() == Qt.Key_A:
+            self.motor2_vel_value.setText(str(50 * boost_multiplier))
+        elif event.key() == Qt.Key_S:
             self.motor2_vel_value.setText(str(-50 * boost_multiplier))
         elif event.key() == Qt.Key_T:
             self.motor1_switch.toggle()
@@ -277,7 +286,8 @@ class MainWindow(QWidget):
     
     def closeEvent(self, event):
         self.comms_thread.terminate()
-        self.gamepad_thread.terminate()
+        if self.have_gamepad():
+            self.gamepad_thread.terminate()
         self.dnx.disable_torque(DXL1_ID)
         self.dnx.disable_torque(DXL2_ID)
         self.dnx.close_port()

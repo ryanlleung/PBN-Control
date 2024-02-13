@@ -263,13 +263,13 @@ class MainWindow(QWidget):
     def keyPressEvent(self, event):
         boost_multiplier = 2 if event.modifiers() & Qt.ShiftModifier else 1
 
-        if event.key() == Qt.Key_W:
+        if event.key() == Qt.Key_Q:
             self.motor1_vel_value.setText(str(50 * boost_multiplier))
-        elif event.key() == Qt.Key_Q:
+        elif event.key() == Qt.Key_W:
             self.motor1_vel_value.setText(str(-50 * boost_multiplier))
-        elif event.key() == Qt.Key_A:
-            self.motor2_vel_value.setText(str(50 * boost_multiplier))
         elif event.key() == Qt.Key_S:
+            self.motor2_vel_value.setText(str(50 * boost_multiplier))
+        elif event.key() == Qt.Key_A:
             self.motor2_vel_value.setText(str(-50 * boost_multiplier))
         elif event.key() == Qt.Key_T:
             self.motor1_switch.toggle()

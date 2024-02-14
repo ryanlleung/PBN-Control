@@ -94,34 +94,37 @@ class SerialPlotter(QMainWindow):
         self.xLabel.setText(f"X Position: {self.serialReader.x}")
         self.yLabel.setText(f"Y Position: {self.serialReader.y}")
 
-
-# Check if the serial port is available
-try:
-    serialCom = serial.Serial('COM4', 9600)
-    print("Connected to COM4")
-except serial.SerialException:
+def main():
+    # Check if the serial port is available
     try:
-        serialCom = serial.Serial('COM5', 9600)
-        print("Connected to COM5")
+        serialCom = serial.Serial('COM4', 9600)
+        print("Connected to COM4")
     except serial.SerialException:
-        print("No serial port available")
-        sys.exit(1)
-serialCom.setDTR(False)
-time.sleep(1)
-serialCom.flushInput()
-serialCom.setDTR(True)
+        try:
+            serialCom = serial.Serial('COM5', 9600)
+            print("Connected to COM5")
+        except serial.SerialException:
+            print("No serial port available")
+            sys.exit(1)
+    serialCom.setDTR(False)
+    time.sleep(1)
+    serialCom.flushInput()
+    serialCom.setDTR(True)
 
-app = QApplication(sys.argv)
+    app = QApplication(sys.argv)
 
-serialReader = SerialReader(serialCom)
-serialReader.start()  # Start the serial reader thread
+    serialReader = SerialReader(serialCom)
+    serialReader.start()  # Start the serial reader thread
 
-plotter = SerialPlotter(serialReader)
-plotter.show()
+    plotter = SerialPlotter(serialReader)
+    plotter.show()
 
-exit_code = app.exec_()
-serialReader.stop()  # Stop the serial reader thread
-serialReader.join()  # Wait for the serial reader thread to finish
-serialCom.close()
-print("Serial port closed.")
-sys.exit(exit_code)
+    exit_code = app.exec_()
+    serialReader.stop()  # Stop the serial reader thread
+    serialReader.join()  # Wait for the serial reader thread to finish
+    serialCom.close()
+    print("Serial port closed.")
+    sys.exit(exit_code)
+
+if __name__ == "__main__":
+    main()

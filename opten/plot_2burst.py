@@ -1,3 +1,4 @@
+
 import sys
 import serial
 import time
@@ -10,6 +11,7 @@ from PyQt5.QtNetwork import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtMultimedia import *
 from PyQt5.QtMultimediaWidgets import *
+
 
 class SerialReader(threading.Thread):
     
@@ -27,7 +29,7 @@ class SerialReader(threading.Thread):
                     dx, dy = map(int, input_line.split(' '))
                     self.x += dx
                     self.y -= dy
-                except ValueError:
+                except:
                     pass
 
     def stop(self):
@@ -35,9 +37,10 @@ class SerialReader(threading.Thread):
 
 class SerialPlotter(QMainWindow):
     
-    def __init__(self, serial_reader):
+    def __init__(self, serial_reader1, serial_reader2):
         super().__init__()
-        self.serialReader = serial_reader
+        self.serialReader1 = serial_reader1
+        self.serialReader2 = serial_reader2
 
         # Set up the main widget and layout
         self.mainWidget = QWidget(self)
@@ -58,18 +61,24 @@ class SerialPlotter(QMainWindow):
         self.graphWidget.setAspectLocked(True)
         self.graphWidget.showGrid(x=True, y=True)
 
-        self.plotData = self.graphWidget.plot([], [], pen=None, symbol='o', symbolSize=10, symbolBrush=('r'))
-
+        self.plotData1 = self.graphWidget.plot([], [], pen=None, symbol='o', symbolSize=10, symbolBrush=('r'))
+        self.plotData2 = self.graphWidget.plot([], [], pen=None, symbol='o', symbolSize=10, symbolBrush=('b'))
+        
         # Add a button to reset x and y values
         self.resetButton = QPushButton("Reset Position")
         self.resetButton.clicked.connect(self.reset_position)
         self.layout.addWidget(self.resetButton)
 
         # Add labels to display x and y positions
-        self.xLabel = QLabel(f"X Position: {self.serialReader.x}")
-        self.yLabel = QLabel(f"Y Position: {self.serialReader.y}")
-        self.layout.addWidget(self.xLabel)
-        self.layout.addWidget(self.yLabel)
+        self.xLabel1 = QLabel(f"COM4 X Position: {self.serialReader1.x}")
+        self.yLabel1 = QLabel(f"COM4 Y Position: {self.serialReader1.y}")
+        self.layout.addWidget(self.xLabel1)
+        self.layout.addWidget(self.yLabel1)
+        
+        self.xLabel2 = QLabel(f"COM5 X Position: {self.serialReader2.x}")
+        self.yLabel2 = QLabel(f"COM5 Y Position: {self.serialReader2.y}")
+        self.layout.addWidget(self.xLabel2)
+        self.layout.addWidget(self.yLabel2)
 
         # Update the plot periodically
         self.timer = QTimer()
@@ -82,46 +91,71 @@ class SerialPlotter(QMainWindow):
         self.show()
 
     def reset_position(self):
-        self.serialReader.x, self.serialReader.y = 0, 0  # Reset x and y values to 0
+        self.serialReader1.x, self.serialReader1.y = 0, 0  # Reset x and y values to 0
+        self.serialReader2.x, self.serialReader2.y = 0, 0  # Reset x and y values to 0
         self.update_labels()  # Update the position labels
 
     def update_plot(self):
-        self.plotData.setData([self.serialReader.x], [self.serialReader.y])
+        self.plotData1.setData([self.serialReader1.x], [self.serialReader1.y])
+        self.plotData2.setData([self.serialReader2.x], [self.serialReader2.y])
         self.update_labels()  # Update the position labels
         QApplication.processEvents()  # Process any other Qt events
 
     def update_labels(self):
-        self.xLabel.setText(f"X Position: {self.serialReader.x}")
-        self.yLabel.setText(f"Y Position: {self.serialReader.y}")
+        self.xLabel1.setText(f"COM4 X Position: {self.serialReader1.x}")
+        self.yLabel1.setText(f"COM4 Y Position: {self.serialReader1.y}")
+        self.xLabel2.setText(f"COM5 X Position: {self.serialReader2.x}")
+        self.yLabel2.setText(f"COM5 Y Position: {self.serialReader2.y}")
+        
 
-
-# Check if the serial port is available
 try:
-    serialCom = serial.Serial('COM4', 9600)
+    serialCom1 = serial.Serial('COM4', 9600)
     print("Connected to COM4")
 except serial.SerialException:
-    try:
-        serialCom = serial.Serial('COM5', 9600)
-        print("Connected to COM5")
-    except serial.SerialException:
-        print("No serial port available")
-        sys.exit(1)
-serialCom.setDTR(False)
+    print("COM4 not available")
+    sys.exit(1)
+try:
+    serialCom2 = serial.Serial('COM5', 9600)
+    print("Connected to COM5")
+except serial.SerialException:
+    print("COM5 not available")
+    sys.exit(1)
+            
+            
+serialCom1.setDTR(False)
 time.sleep(1)
-serialCom.flushInput()
-serialCom.setDTR(True)
+serialCom1.flushInput()
+serialCom1.setDTR(True)
+print("COM4 ready")
+
+serialCom2.setDTR(False)
+time.sleep(1)
+serialCom2.flushInput()
+serialCom2.setDTR(True)
+print("COM5 ready")
+
 
 app = QApplication(sys.argv)
 
-serialReader = SerialReader(serialCom)
-serialReader.start()  # Start the serial reader thread
+serialReader1 = SerialReader(serialCom1)
+serialReader1.start()  # Start the serial reader thread
 
-plotter = SerialPlotter(serialReader)
+serialReader2 = SerialReader(serialCom2)
+serialReader2.start()  # Start the serial reader thread
+
+plotter = SerialPlotter(serialReader1, serialReader2)
 plotter.show()
 
 exit_code = app.exec_()
-serialReader.stop()  # Stop the serial reader thread
-serialReader.join()  # Wait for the serial reader thread to finish
-serialCom.close()
-print("Serial port closed.")
+
+serialReader1.stop()  # Stop the serial reader thread
+serialReader1.join()  # Wait for the serial reader thread to finish
+serialCom1.close()
+print("COM4 closed")
+
+serialReader2.stop()  # Stop the serial reader thread
+serialReader2.join()  # Wait for the serial reader thread to finish
+serialCom2.close()
+print("COM5 closed")
+
 sys.exit(exit_code)

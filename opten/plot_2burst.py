@@ -22,26 +22,40 @@ class SerialReader(threading.Thread):
         self.flip_x = flip_x
         self.flip_y = flip_y
         self.running = True
+        self.initialised = False
+        self.lock = threading.Lock()
 
     def run(self):
         while self.running:
             if self.serialCom.inWaiting() > 0:
+                input_line = ""
                 try:
                     input_line = self.serialCom.readline().decode('utf-8').strip()
-                except:
-                    continue
-                try:
-                    dy, dx = map(int, input_line.split(' '))
-                    if self.flip_x:
-                        dx = -dx
-                    if self.flip_y:
-                        dy = -dy
-                    self.x += dx * 25.4 / self.dpi
-                    self.y += dy * 25.4 / self.dpi
-                except:
-                    if "DPI set to" in input_line:
-                        self.dpi = int(input_line.split(' ')[-1])
-                        print(f"{self.serialCom.name} DPI set to {self.dpi}")
+                except Exception as e:
+                    print(f"{self.serialCom.name}: {e} - {input_line}")
+                else:
+                    self.process_input(input_line)
+                
+    def process_input(self, input_line):
+        if "DPI set to" in input_line:
+            self.dpi = int(input_line.split(' ')[-1])
+            print(f"{self.serialCom.name} DPI set to {self.dpi}")
+        elif "Optical Chip Initialised" in input_line:
+            if not hasattr(self, 'dpi'):
+                raise ValueError(f"DPI not retrieved for {self.serialCom.name}")
+            self.initialised = True
+            print(f"{self.serialCom.name} initialised")
+            return
+            
+        if self.initialised:
+            dy, dx = map(int, input_line.split(' '))
+            if self.flip_x:
+                dx = -dx
+            if self.flip_y:
+                dy = -dy
+            with self.lock:
+                self.x += dx * 25.4 / self.dpi
+                self.y += dy * 25.4 / self.dpi
 
     def stop(self):
         self.running = False
@@ -69,7 +83,7 @@ class SerialPlotter(QMainWindow):
         self.graphWidget.setLabel('bottom', 'X Position / mm')
         self.graphWidget.setXRange(-30.0, 30.0)
         self.graphWidget.setYRange(-50.0, 50.0)
-        self.graphWidget.setAspectLocked(True)
+        # self.graphWidget.setAspectLocked(True)
         self.graphWidget.showGrid(x=True, y=True)
         self.graphWidget.addLegend()
 
@@ -112,7 +126,6 @@ class SerialPlotter(QMainWindow):
     def reset_position(self):
         self.serialReader1.x, self.serialReader1.y = 0, 0
         self.serialReader2.x, self.serialReader2.y = 0, 0
-        self.serialReader1.euc, self.serialReader2.euc = 0, 0
         self.update_labels()  # Update the position labels
 
     def update_plot(self):
@@ -145,13 +158,13 @@ serialCom1.setDTR(False)
 time.sleep(1)
 serialCom1.flushInput()
 serialCom1.setDTR(True)
-print("COM4 ready")
+print("COM4 reset")
 
 serialCom2.setDTR(False)
 time.sleep(1)
 serialCom2.flushInput()
 serialCom2.setDTR(True)
-print("COM5 ready")
+print("COM5 reset")
 
 
 app = QApplication(sys.argv)

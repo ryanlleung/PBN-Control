@@ -3,7 +3,7 @@ import time
 import keyboard
 
 # Open the serial port
-serialCom = serial.Serial('COM4', 9600)
+serialCom = serial.Serial('COM5', 9600)
 
 # Reset the Arduino
 serialCom.setDTR(False)

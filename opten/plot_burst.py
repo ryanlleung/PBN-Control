@@ -22,13 +22,18 @@ class SerialReader(threading.Thread):
     def run(self):
         while self.running:
             if self.serialCom.inWaiting() > 0:
-                input_line = self.serialCom.readline().decode('utf-8').strip()
                 try:
-                    dx, dy = map(int, input_line.split(' '))
-                    self.x += dx
-                    self.y -= dy
-                except ValueError:
-                    pass
+                    input_line = self.serialCom.readline().decode('utf-8').strip()
+                except:
+                    continue
+                try:
+                    dy, dx = map(int, input_line.split(' '))
+                    self.x += dx * 25.4 / self.dpi
+                    self.y += dy * 25.4 / self.dpi
+                except:
+                    if "DPI set to" in input_line:
+                        self.dpi = int(input_line.split(' ')[-1])
+                        print(f"{self.serialCom.name} DPI set to {self.dpi}")
 
     def stop(self):
         self.running = False
@@ -51,14 +56,14 @@ class SerialPlotter(QMainWindow):
 
         self.graphWidget.setBackground('w')
         self.graphWidget.setTitle("XY Position Stream")
-        self.graphWidget.setLabel('left', 'Y Position')
-        self.graphWidget.setLabel('bottom', 'X Position')
-        self.graphWidget.setXRange(-5000, 5000)
-        self.graphWidget.setYRange(-5000, 5000)
+        self.graphWidget.setLabel('left', 'Y Position / mm')
+        self.graphWidget.setLabel('bottom', 'X Position / mm')
+        self.graphWidget.setXRange(-30.0, 30.0)
+        self.graphWidget.setYRange(-50.0, 50.0)
         self.graphWidget.setAspectLocked(True)
         self.graphWidget.showGrid(x=True, y=True)
 
-        self.plotData = self.graphWidget.plot([], [], pen=None, symbol='o', symbolSize=10, symbolBrush=('r'))
+        self.plotData = self.graphWidget.plot([], [], pen=None, symbol='x', symbolSize=10, symbolBrush=('r'), name=self.serialReader.serialCom.name)
 
         # Add a button to reset x and y values
         self.resetButton = QPushButton("Reset Position")
@@ -66,8 +71,8 @@ class SerialPlotter(QMainWindow):
         self.layout.addWidget(self.resetButton)
 
         # Add labels to display x and y positions
-        self.xLabel = QLabel(f"X Position: {self.serialReader.x}")
-        self.yLabel = QLabel(f"Y Position: {self.serialReader.y}")
+        self.xLabel = QLabel(f"X Position: {round(self.serialReader.x, 2)} mm")
+        self.yLabel = QLabel(f"Y Position: {round(self.serialReader.y, 2)} mm")
         self.layout.addWidget(self.xLabel)
         self.layout.addWidget(self.yLabel)
 
@@ -91,8 +96,8 @@ class SerialPlotter(QMainWindow):
         QApplication.processEvents()  # Process any other Qt events
 
     def update_labels(self):
-        self.xLabel.setText(f"X Position: {self.serialReader.x}")
-        self.yLabel.setText(f"Y Position: {self.serialReader.y}")
+        self.xLabel.setText(f"{self.serialReader.serialCom.name} X Position: {round(self.serialReader.x, 2)} mm")
+        self.yLabel.setText(f"{self.serialReader.serialCom.name} Y Position: {round(self.serialReader.y, 2)} mm")
 
 
 # Check if the serial port is available
@@ -106,6 +111,7 @@ except serial.SerialException:
     except serial.SerialException:
         print("No serial port available")
         sys.exit(1)
+        
 serialCom.setDTR(False)
 time.sleep(1)
 serialCom.flushInput()

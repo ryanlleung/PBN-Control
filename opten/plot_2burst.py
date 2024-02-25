@@ -32,7 +32,7 @@ class SerialReader(threading.Thread):
                 try:
                     input_line = self.serialCom.readline().decode('utf-8').strip()
                 except Exception as e:
-                    print(f"{self.serialCom.name}: {e} - {input_line}")
+                    print(f"{self.serialCom.name}: {e} - '{input_line}'")
                 else:
                     self.process_input(input_line)
                 

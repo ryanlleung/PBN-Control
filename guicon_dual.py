@@ -28,6 +28,7 @@ class GamepadThread(QThread):
         self.motor1_vel_value = motor1_vel_value
         self.motor2_switch = motor2_switch
         self.motor2_vel_value = motor2_vel_value
+        self.deadvel = 10
         
     def run(self):
         while True:
@@ -35,12 +36,12 @@ class GamepadThread(QThread):
             for event in events:
                 if event.code == 'ABS_Y':
                     drive_value = int(-event.state / 500) ## change scaler here
-                    if -15 < drive_value < 15:
+                    if abs(drive_value) < self.deadvel:
                         drive_value = 0
                     self.motor1_vel_value.setText(str(drive_value))
                 elif event.code == 'ABS_RY':
                     drive_value = int(event.state / 500) ## change scaler here
-                    if -15 < drive_value < 15:
+                    if abs(drive_value) < self.deadvel:
                         drive_value = 0
                     self.motor2_vel_value.setText(str(drive_value))
                 elif event.code == 'BTN_START':

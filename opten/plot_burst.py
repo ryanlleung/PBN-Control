@@ -1,8 +1,10 @@
+
 import sys
 import serial
 import time
 import threading
 import pyqtgraph as pg
+import numpy as np
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -10,6 +12,7 @@ from PyQt5.QtNetwork import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtMultimedia import *
 from PyQt5.QtMultimediaWidgets import *
+
 
 class SerialReader(threading.Thread):
     
@@ -21,7 +24,13 @@ class SerialReader(threading.Thread):
         self.flip_y = flip_y
         self.running = True
         self.initialised = False
-        self.lock = threading.Lock()
+        # self.lock = threading.Lock()
+        
+        self.theta = 0
+        if self.serialCom.name == 'COM4':
+            self.theta = -2.3
+        elif self.serialCom.name == 'COM5':
+            self.theta = 0
 
     def run(self):
         while self.running:
@@ -51,9 +60,13 @@ class SerialReader(threading.Thread):
                 dx = -dx
             if self.flip_y:
                 dy = -dy
-            with self.lock:
-                self.x += dx * 25.4 / self.dpi
-                self.y += dy * 25.4 / self.dpi
+                
+            # with self.lock:
+            dx_rot = dx * np.cos(np.deg2rad(self.theta)) - dy * np.sin(np.deg2rad(self.theta))
+            dy_rot = dx * np.sin(np.deg2rad(self.theta)) + dy * np.cos(np.deg2rad(self.theta))
+            
+            self.x += dx_rot * 25.4 / self.dpi
+            self.y += dy_rot * 25.4 / self.dpi
 
     def stop(self):
         self.running = False
@@ -93,8 +106,15 @@ class SerialPlotter(QMainWindow):
         # Add labels to display x and y positions
         self.xLabel = QLabel(f"X Position: {round(self.serialReader.x, 2)} mm")
         self.yLabel = QLabel(f"Y Position: {round(self.serialReader.y, 2)} mm")
+        self.thetabox = QHBoxLayout()
+        self.thetaLabel = QLabel(f"Theta: ")
+        self.thetaLineEdit = QLineEdit('0')
+        self.thetaLineEdit.textChanged.connect(self.on_theta_changed)
+        self.thetabox.addWidget(self.thetaLabel)
+        self.thetabox.addWidget(self.thetaLineEdit)
         self.layout.addWidget(self.xLabel)
         self.layout.addWidget(self.yLabel)
+        self.layout.addLayout(self.thetabox)
 
         # Update the plot periodically
         self.timer = QTimer()
@@ -109,6 +129,14 @@ class SerialPlotter(QMainWindow):
     def reset_position(self):
         self.serialReader.x, self.serialReader.y = 0, 0  # Reset x and y values to 0
         self.update_labels()  # Update the position labels
+        
+    def on_theta_changed(self):
+        try:
+            self.serialReader.theta = float(self.thetaLineEdit.text())
+        except ValueError:
+            pass
+        else:
+            print(f"Theta set to {self.serialReader.theta} degrees")
 
     def update_plot(self):
         self.plotData.setData([self.serialReader.x], [self.serialReader.y])

@@ -40,8 +40,8 @@ LEN_PRESENT_TEMPERATURE = 2
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
 
 # Device setting
-DXL1_ID                     = 2                 # Dynamixel#1 ID : 1
-DXL2_ID                     = 3                 # Dynamixel#1 ID : 2
+DXL1_ID                     = 3                 # Dynamixel#1 ID : 1
+DXL2_ID                     = 2                 # Dynamixel#1 ID : 2
 BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
 DEVICENAME                  = 'COM3'            # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
@@ -53,7 +53,6 @@ class Dynamixel:
     def __init__(self):
         self.port_handler = PortHandler(DEVICENAME)
         self.packet_handler = PacketHandler(PROTOCOL_VERSION)
-        self.current_mode = "pos"
         self.sync_read_position = GroupSyncRead(self.port_handler, self.packet_handler, 
                                                 CT_PRESENT_POSITION, LEN_PRESENT_POSITION)
         self.sync_write_position = GroupSyncWrite(self.port_handler, self.packet_handler,
@@ -68,8 +67,9 @@ class Dynamixel:
                                                CT_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
         self.sync_read_temperature = GroupSyncRead(self.port_handler, self.packet_handler,
                                                    CT_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
+        self.op_mode = "vel"
 
-    def open_port(self, BAUDRATE=57600):
+    def open_port(self):
         if self.port_handler.openPort():
             print("Attempting to open port")
         else:
@@ -110,21 +110,25 @@ class Dynamixel:
         print(f"Torque disabled for ID {id}")
 
     def set_mode(self, id, mode):
-        if self.current_mode == mode:
+        if self.op_mode == mode:
             return
         self.disable_torque(id)
         if mode == "pos":
             self._write_register(id, CT_OPERATING_MODE, 3)
             print(f"Position mode set for ID {id}")
-            self.current_mode = "pos"
+            self.op_mode = "pos"
+        elif mode == "extpos":
+            self._write_register(id, CT_OPERATING_MODE, 4)
+            print(f"Extended position mode set for ID {id}")
+            self.op_mode = "extpos"
         elif mode == "vel":
             self._write_register(id, CT_OPERATING_MODE, 1)
             print(f"Velocity mode set for ID {id}")
-            self.current_mode = "vel"
+            self.op_mode = "vel"
         elif mode == "cur":
             self._write_register(id, CT_OPERATING_MODE, 0)
             print(f"Current mode set for ID {id}")
-            self.current_mode = "cur"
+            self.op_mode = "cur"
         else:
             print("Invalid mode")
             quit()
@@ -267,16 +271,16 @@ class Dynamixel:
             
     #### Higher Level ####
     
-    def set_dualvel(self, vel1, vel2, t, brake=True):
+    def set_dualvel(self, vel1, vel2, dur, brake=True):
         BUFF = 0.2
-        if t < BUFF:
+        if dur < BUFF:
             print(f"Time must be greater than {BUFF}s")
             self.set_velocity(DXL1_ID, 0)
             self.set_velocity(DXL2_ID, 0)
             return
         self.set_velocity(DXL1_ID, -vel1)
         self.set_velocity(DXL2_ID, vel2)
-        time.sleep(t-BUFF)
+        time.sleep(dur-BUFF)
         if brake:
             self.set_velocity(DXL1_ID, 0)
             self.set_velocity(DXL2_ID, 0)
@@ -298,7 +302,22 @@ if __name__ == "__main__":
     dnx.enable_torque(DXL1_ID)
     dnx.enable_torque(DXL2_ID)
     
-    dnx.set_dualvel(200, 176, 3)
+    # dnx.set_position(DXL2_ID, 0)
+    # time.sleep(2)
+    # print(f"Position: {dnx.get_position(DXL2_ID)}")
+    
+    # dnx.set_position(DXL2_ID, 200)
+    # time.sleep(2)
+    # print(f"Position: {dnx.get_position(DXL2_ID)}")
+    
+    positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
+    print(f"Positions: {positions}")
+    dnx.set_dualvel(200, 100, 1)
+    positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
+    print(f"Positions: {positions}")
+    dnx.set_dualvel(-200, -100, 1)
+    positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
+    print(f"Positions: {positions}")
 
     # dnx.set_dualvel(50, 50, 1)
     # dnx.set_dualvel(-50, -50, 1.05)

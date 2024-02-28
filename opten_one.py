@@ -71,6 +71,13 @@ class SerialReader(threading.Thread):
         self.running = False
 
 
+#### Motor Init ####
+
+dnx = Dynamixel()
+dnx.open_port()
+
+dnx.enable_torque(DXL1_ID)
+dnx.enable_torque(DXL2_ID)
 
 #### Opten Init ####
 try:
@@ -91,14 +98,6 @@ serialCom.setDTR(True)
 
 sr = SerialReader(serialCom)
 sr.start()  # Start the serial reader thread
-
-#### Motor Init ####
-
-dnx = Dynamixel()
-dnx.open_port()
-
-dnx.enable_torque(DXL1_ID)
-dnx.enable_torque(DXL2_ID)
 
 while sr.initialised is False:
     time.sleep(0.1)

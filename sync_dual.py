@@ -40,8 +40,8 @@ LEN_PRESENT_TEMPERATURE = 2
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
 
 # Device setting
-DXL1_ID                     = 3                 # Dynamixel#1 ID : 1
-DXL2_ID                     = 2                 # Dynamixel#1 ID : 2
+DXL1_ID                     = 2                 # Dynamixel#1 ID : 1
+DXL2_ID                     = 3                 # Dynamixel#1 ID : 2
 BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
 DEVICENAME                  = 'COM3'            # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
@@ -90,8 +90,10 @@ class Dynamixel:
         comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, address, value)
         if comm_result != COMM_SUCCESS:
             print("%s" % self.packet_handler.getTxRxResult(comm_result))
+            # raise Exception(f"Failed to write register {address} for ID {id}")
         elif error != 0:
-            print("%s" % self.packet_handler.getRxPacketError(error))        
+            print("%s" % self.packet_handler.getRxPacketError(error))
+            # raise Exception(f"Failed to write register {address} for ID {id}")
 
     #### Torque & Mode ####
 

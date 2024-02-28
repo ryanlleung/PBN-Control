@@ -152,7 +152,7 @@ try:
 except serial.SerialException:
     print("COM5 not available")
     sys.exit(1)
-            
+
             
 serialCom1.setDTR(False)
 time.sleep(1)

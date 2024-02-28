@@ -100,7 +100,7 @@ ADDR_OPERATING_MODE         = 11
 PROTOCOL_VERSION            = 2.0            # See which protocol version is used in the Dynamixel
 
 # Factory default ID of all DYNAMIXEL is 1
-DXL_ID                      = 4
+DXL_ID                      = 3
 
 # Use the actual port assigned to the U2D2.
 # ex) Windows: "COM*", Linux: "/dev/ttyUSB*", Mac: "/dev/tty.usbserial-*"
@@ -148,10 +148,8 @@ else:
 # Set operating mode to extended position control mode
 dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, DXL_ID, ADDR_OPERATING_MODE, EXT_POSITION_CONTROL_MODE)
 if dxl_comm_result != COMM_SUCCESS:
-    print("Huh")
     print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
 elif dxl_error != 0:
-    print('Why')
     print("%s" % packetHandler.getRxPacketError(dxl_error))
 else:
     print("Operating mode changed to extended position control mode.")

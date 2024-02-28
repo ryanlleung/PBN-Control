@@ -4,28 +4,28 @@ from dynamixel_sdk import *                    # Uses Dynamixel SDK library
 
 
 # Control table address
-CT_OPERATING_MODE =         11
+ADDR_OPERATING_MODE =         11
 
-CT_TORQUE_ENABLE =          64
-CT_LED =                    65
-CT_STATUS_RETURN_LEVEL =    68
-CT_REGISTERED_INSTRUCTION = 69
-CT_HARDWARE_ERROR_STATUS =  70
+ADDR_TORQUE_ENABLE =          64
+ADDR_LED =                    65
+ADDR_STATUS_RETURN_LEVEL =    68
+ADDR_REGISTERED_INSTRUCTION = 69
+ADDR_HARDWARE_ERROR_STATUS =  70
 
-CT_GOAL_PWM =               100
-CT_GOAL_CURRENT =           102
-CT_GOAL_VELOCITY =          104
-CT_GOAL_POSITION =          116
+ADDR_GOAL_PWM =               100
+ADDR_GOAL_CURRENT =           102
+ADDR_GOAL_VELOCITY =          104
+ADDR_GOAL_POSITION =          116
 
-CT_MOVING =                 122
-CT_MOVING_STATUS =          123
+ADDR_MOVING =                 122
+ADDR_MOVING_STATUS =          123
 
-CT_PRESENT_PWM =            124
-CT_PRESENT_CURRENT =        126
-CT_PRESENT_VELOCITY =       128
-CT_PRESENT_POSITION =       132
-CT_PRESENT_INPUT_VOLTAGE =  144
-CT_PRESENT_TEMPERATURE =    146
+ADDR_PRESENT_PWM =            124
+ADDR_PRESENT_CURRENT =        126
+ADDR_PRESENT_VELOCITY =       128
+ADDR_PRESENT_POSITION =       132
+ADDR_PRESENT_INPUT_VOLTAGE =  144
+ADDR_PRESENT_TEMPERATURE =    146
 
 # Data Byte Length
 LEN_GOAL_POSITION       = 4
@@ -54,19 +54,19 @@ class Dynamixel:
         self.port_handler = PortHandler(DEVICENAME)
         self.packet_handler = PacketHandler(PROTOCOL_VERSION)
         self.sync_read_position = GroupSyncRead(self.port_handler, self.packet_handler, 
-                                                CT_PRESENT_POSITION, LEN_PRESENT_POSITION)
+                                                ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION)
         self.sync_write_position = GroupSyncWrite(self.port_handler, self.packet_handler,
-                                                  CT_GOAL_POSITION, LEN_GOAL_POSITION)
+                                                  ADDR_GOAL_POSITION, LEN_GOAL_POSITION)
         self.sync_read_velocity = GroupSyncRead(self.port_handler, self.packet_handler,
-                                                CT_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY)
+                                                ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY)
         self.sync_write_velocity = GroupSyncWrite(self.port_handler, self.packet_handler,
-                                                  CT_GOAL_VELOCITY, LEN_GOAL_VELOCITY)
+                                                  ADDR_GOAL_VELOCITY, LEN_GOAL_VELOCITY)
         self.sync_read_current = GroupSyncRead(self.port_handler, self.packet_handler,
-                                                  CT_PRESENT_CURRENT, LEN_PRESENT_CURRENT)
+                                                  ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT)
         self.sync_read_voltage = GroupSyncRead(self.port_handler, self.packet_handler,
-                                               CT_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
+                                               ADDR_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
         self.sync_read_temperature = GroupSyncRead(self.port_handler, self.packet_handler,
-                                                   CT_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
+                                                   ADDR_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
         self.op_mode = "vel"
 
     def open_port(self):
@@ -94,12 +94,13 @@ class Dynamixel:
         elif error != 0:
             print("%s" % self.packet_handler.getRxPacketError(error))
             # raise Exception(f"Failed to write register {address} for ID {id}")
+        return comm_result, error
 
-    #### Torque & Mode ####
+    #### Torque & Modes ####
 
     def _set_torque(self, id, enable):
         value = 1 if enable else 0
-        self._write_register(id, CT_TORQUE_ENABLE, value)
+        self._write_register(id, ADDR_TORQUE_ENABLE, value)
 
     def enable_torque(self, id):
         self._set_torque(id, True)
@@ -115,22 +116,19 @@ class Dynamixel:
         if self.op_mode == mode:
             return
         self.disable_torque(id)
-        if mode == "pos":
-            self._write_register(id, CT_OPERATING_MODE, 3)
-            print(f"Position mode set for ID {id}")
-            self.op_mode = "pos"
-        elif mode == "extpos":
-            self._write_register(id, CT_OPERATING_MODE, 4)
-            print(f"Extended position mode set for ID {id}")
-            self.op_mode = "extpos"
-        elif mode == "vel":
-            self._write_register(id, CT_OPERATING_MODE, 1)
-            print(f"Velocity mode set for ID {id}")
-            self.op_mode = "vel"
-        elif mode == "cur":
-            self._write_register(id, CT_OPERATING_MODE, 0)
-            print(f"Current mode set for ID {id}")
-            self.op_mode = "cur"
+        mode_settings = {
+            "pos": (3, "Position"), # Not useful
+            "extpos": (4, "Extended position"),
+            "curpos": (5, "Current-based position"),
+            "vel": (1, "Velocity"),
+            "pwm": (16, "PWM"),
+            "cur": (0, "Current")
+        }
+        if mode in mode_settings:
+            register_value, mode_description = mode_settings[mode]
+            self._write_register(id, ADDR_OPERATING_MODE, register_value)
+            print(f"{mode_description} mode set for ID {id}")
+            self.op_mode = mode
         else:
             print("Invalid mode")
             quit()
@@ -140,7 +138,7 @@ class Dynamixel:
 
     def _set_LED(self, id, enable):
         value = 1 if enable else 0
-        self._write_register(id, CT_LED, value)
+        self._write_register(id, ADDR_LED, value)
 
     def turn_LED_on(self, id):
         self._set_LED(id, True)
@@ -159,11 +157,11 @@ class Dynamixel:
         comm_result = self.sync_read_current.txRxPacket()
         if comm_result != COMM_SUCCESS:
             print("%s" % self.packet_handler.getTxRxResult(comm_result))
-        getdata_result = self.sync_read_current.isAvailable(id, CT_PRESENT_CURRENT, LEN_PRESENT_CURRENT)
+        getdata_result = self.sync_read_current.isAvailable(id, ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT)
         if getdata_result != True:
             print("[ID:%03d] groupSyncRead getdata failed" % id)
             quit()
-        current = self.sync_read_current.getData(id, CT_PRESENT_CURRENT, LEN_PRESENT_CURRENT)
+        current = self.sync_read_current.getData(id, ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT)
         # Convert to signed int
         if current > 32768:
             current -= 65536
@@ -178,11 +176,11 @@ class Dynamixel:
         comm_result = self.sync_read_voltage.txRxPacket()
         if comm_result != COMM_SUCCESS:
             print("%s" % self.packet_handler.getTxRxResult(comm_result))
-        getdata_result = self.sync_read_voltage.isAvailable(id, CT_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
+        getdata_result = self.sync_read_voltage.isAvailable(id, ADDR_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
         if getdata_result != True:
             print("[ID:%03d] groupSyncRead getdata failed" % id)
             quit()
-        voltage = self.sync_read_voltage.getData(id, CT_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
+        voltage = self.sync_read_voltage.getData(id, ADDR_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
         return voltage
     
     def get_temperature(self, id):
@@ -194,15 +192,16 @@ class Dynamixel:
         comm_result = self.sync_read_temperature.txRxPacket()
         if comm_result != COMM_SUCCESS:
             print("%s" % self.packet_handler.getTxRxResult(comm_result))
-        getdata_result = self.sync_read_temperature.isAvailable(id, CT_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
+        getdata_result = self.sync_read_temperature.isAvailable(id, ADDR_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
         if getdata_result != True:
             print("[ID:%03d] groupSyncRead getdata failed" % id)
             quit()
-        temperature = self.sync_read_temperature.getData(id, CT_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
+        temperature = self.sync_read_temperature.getData(id, ADDR_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
         return temperature
 
     #### Position ####
 
+    # Reads present position (1 = 0.088° = 0.00153 rad)
     def get_position(self, id):
         self.sync_read_position.clearParam()
         add_param_result = self.sync_read_position.addParam(id)
@@ -212,22 +211,25 @@ class Dynamixel:
         comm_result = self.sync_read_position.txRxPacket()
         if comm_result != COMM_SUCCESS:
             print("%s" % self.packet_handler.getTxRxResult(comm_result))
-        getdata_result = self.sync_read_position.isAvailable(id, CT_PRESENT_POSITION, LEN_PRESENT_POSITION)
+        getdata_result = self.sync_read_position.isAvailable(id, ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION)
         if getdata_result != True:
             print("[ID:%03d] groupSyncRead getdata failed" % id)
             quit()
-        position = self.sync_read_position.getData(id, CT_PRESENT_POSITION, LEN_PRESENT_POSITION)
+        position = self.sync_read_position.getData(id, ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION)
         # Convert to signed int
         if position > 2147483648:
             position -= 4294967296
         return position
-
-    def set_position(self, id, position):
+            
+    # Writes goal position in extended position or current-based position mode (1 = 0.088° = 0.00153 rad)
+    def set_position(self, id, position, mode="extpos"):
+        if mode not in ["extpos", "curpos"]:
+            raise ValueError("Invalid mode")
+        self.set_mode(id, mode)
         position = int(position)
-        self.set_mode(id, "pos")
-        self.sync_write_position.clearParam()
         position_byte = [DXL_LOBYTE(DXL_LOWORD(position)), DXL_HIBYTE(DXL_LOWORD(position)), 
                          DXL_LOBYTE(DXL_HIWORD(position)), DXL_HIBYTE(DXL_HIWORD(position))]
+        self.sync_write_position.clearParam()
         add_param_result = self.sync_write_position.addParam(id, position_byte)
         if add_param_result != True:
             print("[ID:%03d] groupSyncWrite addparam failed" % id)
@@ -238,6 +240,7 @@ class Dynamixel:
 
     #### Velocity ####
 
+    # Reads present velocity (1 = 0.229 rpm = 0.02398 rad/s)
     def get_velocity(self, id):
         self.sync_read_velocity.clearParam()
         add_param_result = self.sync_read_velocity.addParam(id)
@@ -247,22 +250,23 @@ class Dynamixel:
         comm_result = self.sync_read_velocity.txRxPacket()
         if comm_result != COMM_SUCCESS:
             print("%s" % self.packet_handler.getTxRxResult(comm_result))
-        getdata_result = self.sync_read_velocity.isAvailable(id, CT_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY)
+        getdata_result = self.sync_read_velocity.isAvailable(id, ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY)
         if getdata_result != True:
             print("[ID:%03d] groupSyncRead getdata failed" % id)
             quit()
-        velocity = self.sync_read_velocity.getData(id, CT_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY)
+        velocity = self.sync_read_velocity.getData(id, ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY)
         # Convert to signed int
         if velocity > 2147483648:
             velocity -= 4294967296
         return velocity
 
+    # Writes goal velocity (1 = 0.229 rpm = 0.02398 rad/s)
     def set_velocity(self, id, velocity):
-        velocity = int(velocity)
         self.set_mode(id, "vel")
-        self.sync_write_velocity.clearParam()
+        velocity = int(velocity)
         velocity_byte = [DXL_LOBYTE(DXL_LOWORD(velocity)), DXL_HIBYTE(DXL_LOWORD(velocity)), 
                          DXL_LOBYTE(DXL_HIWORD(velocity)), DXL_HIBYTE(DXL_HIWORD(velocity))]
+        self.sync_write_velocity.clearParam()
         add_param_result = self.sync_write_velocity.addParam(id, velocity_byte)
         if add_param_result != True:
             print("[ID:%03d] groupSyncWrite addparam failed" % id)
@@ -304,22 +308,28 @@ if __name__ == "__main__":
     dnx.enable_torque(DXL1_ID)
     dnx.enable_torque(DXL2_ID)
     
-    # dnx.set_position(DXL2_ID, 0)
-    # time.sleep(2)
-    # print(f"Position: {dnx.get_position(DXL2_ID)}")
+    dnx.set_position(DXL2_ID, 0)
+    time.sleep(2)
+    print(f"Position: {dnx.get_position(DXL2_ID)}")
     
-    # dnx.set_position(DXL2_ID, 200)
-    # time.sleep(2)
-    # print(f"Position: {dnx.get_position(DXL2_ID)}")
+    print("Starting")
+    dnx.set_position(DXL2_ID, 5000)
+    print(f"Position: {dnx.get_position(DXL2_ID)}")
+    time.sleep(2)
+    print(f"Position: {dnx.get_position(DXL2_ID)}")
     
-    positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
-    print(f"Positions: {positions}")
-    dnx.set_dualvel(200, 100, 1)
-    positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
-    print(f"Positions: {positions}")
-    dnx.set_dualvel(-200, -100, 1)
-    positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
-    print(f"Positions: {positions}")
+    dnx.set_velocity(DXL1_ID, 200)
+    time.sleep(2)
+    dnx.set_velocity(DXL1_ID, 0)
+    
+    # positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
+    # print(f"Positions: {positions}")
+    # dnx.set_dualvel(200, 100, 1)
+    # positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
+    # print(f"Positions: {positions}")
+    # dnx.set_dualvel(-200, -100, 1)
+    # positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
+    # print(f"Positions: {positions}")
 
     # dnx.set_dualvel(50, 50, 1)
     # dnx.set_dualvel(-50, -50, 1.05)

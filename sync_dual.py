@@ -308,19 +308,19 @@ if __name__ == "__main__":
     dnx.enable_torque(DXL1_ID)
     dnx.enable_torque(DXL2_ID)
     
-    dnx.set_position(DXL2_ID, 0)
-    time.sleep(2)
-    print(f"Position: {dnx.get_position(DXL2_ID)}")
+    # dnx.set_position(DXL2_ID, 0)
+    # time.sleep(2)
+    # print(f"Position: {dnx.get_position(DXL2_ID)}")
     
-    print("Starting")
-    dnx.set_position(DXL2_ID, 5000)
-    print(f"Position: {dnx.get_position(DXL2_ID)}")
-    time.sleep(2)
-    print(f"Position: {dnx.get_position(DXL2_ID)}")
+    # print("Starting")
+    # dnx.set_position(DXL2_ID, 5000)
+    # print(f"Position: {dnx.get_position(DXL2_ID)}")
+    # time.sleep(2)
+    # print(f"Position: {dnx.get_position(DXL2_ID)}")
     
-    dnx.set_velocity(DXL1_ID, 200)
-    time.sleep(2)
-    dnx.set_velocity(DXL1_ID, 0)
+    # dnx.set_velocity(DXL1_ID, 200)
+    # time.sleep(2)
+    # dnx.set_velocity(DXL1_ID, 0)
     
     # positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
     # print(f"Positions: {positions}")
@@ -337,7 +337,6 @@ if __name__ == "__main__":
     # dnx.set_dualvel(-50, 0, 1.05)
     # dnx.set_dualvel(0, 50, 1)
     # dnx.set_dualvel(0, -50, 1.2)
-    
 
     dnx.disable_torque(DXL1_ID)
     dnx.disable_torque(DXL2_ID)

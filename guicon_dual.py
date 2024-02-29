@@ -203,7 +203,7 @@ class MainWindow(QWidget):
 
         #### Main Layout ####
         self.timer = QTimer()
-        self.timer.setInterval(50)  # Interval in milliseconds
+        self.timer.setInterval(100)  # Interval in milliseconds
         self.timer.timeout.connect(self.update_values)
         self.timer.start() 
         

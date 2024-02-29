@@ -57,7 +57,7 @@ class GamepadThread(QThread):
                     if event.state == 1:
                         self.motor2_switch.toggle()
                         
-# Handle communication with the Dynamixel motors                    
+# Handle communication with the Dynamixel motors
 class MotorThread(QThread):
     
     def __init__(self, dnx, 
@@ -110,11 +110,9 @@ class MotorThread(QThread):
             self.motor2_pos_value.setText(str(self.dnx.get_position(DXL2_ID)))
             self.motor2_current_value.setText(str(self.dnx.get_current(DXL2_ID)))
             self.motor2_temp_value.setText(str(self.dnx.get_temperature(DXL2_ID)))
-            time.sleep(0.050)
-            
+            time.sleep(0.06)     
                     
 # Main Window
-
 class MainWindow(QWidget):
     
     def __init__(self):
@@ -129,9 +127,9 @@ class MainWindow(QWidget):
         self.opt = OpticalDuo()
         self.opt.start_burst()
         
-        self.motor1_pos_scale, self.motor2_pos_scale = 52.5, -52.5
-        self.motor1_apos = -self.dnx.get_position(DXL1_ID)*self.motor1_pos_scale
-        self.motor2_apos = -self.dnx.get_position(DXL2_ID)*self.motor2_pos_scale
+        self.motor1_pos_scale, self.motor2_pos_scale = 52.5, 52.5
+        self.motor1_apos = -self.dnx.get_position(DXL1_ID)/self.motor1_pos_scale
+        self.motor2_apos = -self.dnx.get_position(DXL2_ID)/self.motor2_pos_scale*-1
         self.opten1_posx, self.opten2_posx = 0, 0
         self.opten1_posy, self.opten2_posy = 0, 0
         
@@ -176,6 +174,7 @@ class MainWindow(QWidget):
         motor1_label_box.addWidget(motor1_label)
         motor1_label_box.addStretch(1)
         motor1_label_box.addWidget(self.motor1_switch)
+        self.motor1_switch_last = self.motor1_switch.isChecked()
         
         motor1_vel_box = QHBoxLayout()
         motor1_vel_label = QLabel("Set Velocity")
@@ -192,6 +191,14 @@ class MainWindow(QWidget):
         self.motor1_pos_value.setReadOnly(True)
         motor1_pos_box.addWidget(motor1_pos_label)
         motor1_pos_box.addWidget(self.motor1_pos_value)
+        
+        motor1_voltage_box = QHBoxLayout()
+        motor1_voltage_label = QLabel("Voltage / V")
+        motor1_voltage_label.setFixedWidth(80)
+        self.motor1_voltage_value = QLineEdit(str(self.dnx.get_voltage(DXL1_ID)/10))
+        self.motor1_voltage_value.setReadOnly(True)
+        motor1_voltage_box.addWidget(motor1_voltage_label)
+        motor1_voltage_box.addWidget(self.motor1_voltage_value)
         
         motor1_current_box = QHBoxLayout()
         motor1_current_label = QLabel("Current / mA")
@@ -214,7 +221,6 @@ class MainWindow(QWidget):
         motor1_scale_label.setFixedWidth(80)
         self.motor1_scale_value = QDoubleSpinBox()
         self.motor1_scale_value.setValue(self.motor1_pos_scale)
-        self.motor1_scale_value.setRange(1, 100)
         self.motor1_scale_value.setSingleStep(0.5)
         self.motor1_scale_value.valueChanged.connect(self.update_motor1_scale)
         motor1_scale_box.addWidget(motor1_scale_label)
@@ -260,7 +266,7 @@ class MainWindow(QWidget):
         motor1_box.addLayout(opten1_posx_box)
         motor1_box.addLayout(opten1_posy_box)
         motor1_box.addWidget(motor1_reset_button)
-        
+         
         #### Motor 2 ####
         
         motor2_box = QVBoxLayout()
@@ -272,6 +278,7 @@ class MainWindow(QWidget):
         motor2_label_box.addWidget(motor2_label)
         motor2_label_box.addStretch(1)
         motor2_label_box.addWidget(self.motor2_switch)
+        self.motor2_switch_last = self.motor2_switch.isChecked()
         
         motor2_vel_box = QHBoxLayout()
         motor2_vel_label = QLabel("Set Velocity")
@@ -288,6 +295,14 @@ class MainWindow(QWidget):
         self.motor2_pos_value.setReadOnly(True)
         motor2_pos_box.addWidget(motor2_pos_label)
         motor2_pos_box.addWidget(self.motor2_pos_value)
+        
+        motor2_voltage_box = QHBoxLayout()
+        motor2_voltage_label = QLabel("Voltage / V")
+        motor2_voltage_label.setFixedWidth(80)
+        self.motor2_voltage_value = QLineEdit(str(self.dnx.get_voltage(DXL2_ID)/10))
+        self.motor2_voltage_value.setReadOnly(True)
+        motor2_voltage_box.addWidget(motor2_voltage_label)
+        motor2_voltage_box.addWidget(self.motor2_voltage_value)
         
         motor2_current_box = QHBoxLayout()
         motor2_current_label = QLabel("Current / mA")
@@ -310,7 +325,6 @@ class MainWindow(QWidget):
         motor2_scale_label.setFixedWidth(80)
         self.motor2_scale_value = QDoubleSpinBox()
         self.motor2_scale_value.setValue(self.motor2_pos_scale)
-        self.motor2_scale_value.setRange(1, 100)
         self.motor2_scale_value.setSingleStep(0.5)
         self.motor2_scale_value.valueChanged.connect(self.update_motor2_scale)
         motor2_scale_box.addWidget(motor2_scale_label)
@@ -351,6 +365,7 @@ class MainWindow(QWidget):
         motor2_box.addLayout(motor2_pos_box)
         motor2_box.addLayout(motor2_current_box)
         motor2_box.addLayout(motor2_temp_box)
+        motor2_box.addLayout(motor2_scale_box)
         motor2_box.addLayout(motor2_apos_box)
         motor2_box.addLayout(opten2_posx_box)
         motor2_box.addLayout(opten2_posy_box)
@@ -360,11 +375,12 @@ class MainWindow(QWidget):
         
         self.graph1 = pg.PlotWidget()
         self.graph1.setBackground('w')
-        self.graph1.setTitle("XY Position Stream")
+        self.graph1.setTitle("PBN1 Position Stream")
         self.graph1.setLabel('left', 'Positions / mm')
         self.graph1.setLabel('bottom', 'Time / s')
         self.graph1.showGrid(x=True, y=True)
         self.graph1.addLegend()
+        self.graph1.setMouseEnabled(x=False, y=False)
         
         self.motor1_apos_plot = self.graph1.plot(self.motor1_apos_data, pen=(255,0,0), name="Motor 1")
         self.opten1_posx_plot = self.graph1.plot(self.opten1_posx_data, pen=(0,0,255), name="Opten 1 X")
@@ -374,34 +390,45 @@ class MainWindow(QWidget):
         
         self.graph2 = pg.PlotWidget()
         self.graph2.setBackground('w')
-        self.graph2.setTitle("XY Position Stream")
+        self.graph2.setTitle("PBN2 Position Stream")
         self.graph2.setLabel('left', 'Positions / mm')
         self.graph2.setLabel('bottom', 'Time / s')
         self.graph2.showGrid(x=True, y=True)
         self.graph2.addLegend()
+        self.graph2.setMouseEnabled(x=False, y=False)
         
         self.motor2_apos_plot = self.graph2.plot(self.motor2_apos_data, pen=(255,0,0), name="Motor 2")
         self.opten2_posx_plot = self.graph2.plot(self.opten2_posx_data, pen=(0,0,255), name="Opten 2 X")
         self.opten2_posy_plot = self.graph2.plot(self.opten2_posy_data, pen=(0,255,0), name="Opten 2 Y")
-    
+        
+        #### Data Box ####
+        
+        self.data_box = QHBoxLayout()
+        self.export_button = QPushButton("Export Data")
+        self.export_button.clicked.connect(self.export_csv)
+        self.fps_label = QLabel("0 fps")
+        self.fps_label.setFixedWidth(50)
+        self.fps_label.setStyleSheet("text-align:right")
+        self.data_box.addWidget(self.export_button)
+        self.data_box.addWidget(self.fps_label)
+            
         #### Main Layout ####
+        
         self.timer = QTimer()
-        self.timer.setInterval(50)  # Interval in milliseconds
+        self.timer.setInterval(60)  # Interval in milliseconds
         self.timer.timeout.connect(self.update_values)
         self.timer.start() 
         
-        boxbox = QVBoxLayout(self)
-        box = QGridLayout()
-        box.addLayout(motor1_box, 0, 0)
-        box.addLayout(motor2_box, 1, 0)
-        box.addWidget(self.graph1, 0, 1)
-        box.addWidget(self.graph2, 1, 1)
-        box.setContentsMargins(10, 10, 10, 10)
-        self.export_button = QPushButton("Export Data")
-        self.export_button.clicked.connect(self.export_csv)
-        boxbox.addLayout(box)
-        boxbox.addWidget(self.export_button)
-        self.setLayout(boxbox)
+        box = QVBoxLayout(self)
+        grid = QGridLayout()
+        grid.addLayout(motor1_box, 0, 0)
+        grid.addLayout(motor2_box, 1, 0)
+        grid.addWidget(self.graph1, 0, 1)
+        grid.addWidget(self.graph2, 1, 1)
+        grid.setContentsMargins(10, 10, 10, 10)
+        box.addLayout(grid)
+        box.addLayout(self.data_box)
+        self.setLayout(box)
 
         icon_bytes = base64.b64decode(b'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')
         icon = QImage.fromData(icon_bytes)
@@ -424,10 +451,12 @@ class MainWindow(QWidget):
         self.motor1_apos -= float(self.motor1_apos_value.text())
         
     def reset_opten1_posx(self):
-        self.opt.serial_reader1.x = 0
+        if self.opt.connections[self.opt.port1]:
+            self.opt.serial_reader1.x = 0
         
     def reset_opten1_posy(self):
-        self.opt.serial_reader1.y = 0
+        if self.opt.connections[self.opt.port1]:
+            self.opt.serial_reader1.y = 0
         
     def reset_motor1_all(self):
         self.reset_motor1_apos()
@@ -438,10 +467,12 @@ class MainWindow(QWidget):
         self.motor2_apos -= float(self.motor2_apos_value.text())
         
     def reset_opten2_posx(self):
-        self.opt.serial_reader2.x = 0
+        if self.opt.connections[self.opt.port2]:
+            self.opt.serial_reader2.x = 0
         
     def reset_opten2_posy(self):
-        self.opt.serial_reader2.y = 0
+        if self.opt.connections[self.opt.port2]:
+            self.opt.serial_reader2.y = 0
         
     def reset_motor2_all(self):
         self.reset_motor2_apos()
@@ -455,26 +486,38 @@ class MainWindow(QWidget):
         self.motor2_pos_scale = self.motor2_scale_value.value()
         
     def update_values(self):
+            
         # update adjusted motor values
-        self.motor1_apos_value.setText(f"{round(float(self.motor1_pos_value.text())/self.motor1_pos_scale + self.motor1_apos, 2)}")
-        self.opten1_posx_value.setText(str(round(self.opt.serial_reader1.x, 2)))
-        self.opten1_posy_value.setText(str(round(self.opt.serial_reader1.y, 2)))
+        opten1_posx, opten1_posy = 0, 0
+        opten2_posx, opten2_posy = 0, 0
+        if self.opt.connections[self.opt.port1]:
+            opten1_posx = self.opt.serial_reader1.x
+            opten1_posy = self.opt.serial_reader1.y
+        if self.opt.connections[self.opt.port2]:
+            opten2_posx = self.opt.serial_reader2.x
+            opten2_posy = self.opt.serial_reader2.y
         
-        self.motor2_apos_value.setText(f"{round(float(self.motor2_pos_value.text())/self.motor2_pos_scale + self.motor2_apos, 2)}")
-        self.opten2_posx_value.setText(str(round(self.opt.serial_reader2.x, 2)))
-        self.opten2_posy_value.setText(str(round(self.opt.serial_reader2.y, 2)))       
+        self.motor1_apos_value.setText(f"{round(float(self.motor1_pos_value.text())/self.motor1_pos_scale + self.motor1_apos, 2)}")
+        self.opten1_posx_value.setText(str(round(opten1_posx, 2)))
+        self.opten1_posy_value.setText(str(round(opten1_posy, 2)))
+        
+        self.motor2_apos_value.setText(f"{round(float(self.motor2_pos_value.text())/self.motor2_pos_scale*-1 + self.motor2_apos, 2)}")
+        self.opten2_posx_value.setText(str(round(opten2_posx, 2)))
+        self.opten2_posy_value.setText(str(round(opten2_posy, 2)))     
         
         # update data
         self.motor1_apos_data = np.append(self.motor1_apos_data, float(self.motor1_apos_value.text()))
-        self.opten1_posx_data = np.append(self.opten1_posx_data, self.opt.serial_reader1.x)
-        self.opten1_posy_data = np.append(self.opten1_posy_data, self.opt.serial_reader1.y)
+        self.opten1_posx_data = np.append(self.opten1_posx_data, opten1_posx)
+        self.opten1_posy_data = np.append(self.opten1_posy_data, opten1_posy)
         
         self.motor2_apos_data = np.append(self.motor2_apos_data, float(self.motor2_apos_value.text()))
-        self.opten2_posx_data = np.append(self.opten2_posx_data, self.opt.serial_reader2.x)
-        self.opten2_posy_data = np.append(self.opten2_posy_data, self.opt.serial_reader2.y)
+        self.opten2_posx_data = np.append(self.opten2_posx_data, opten2_posx)
+        self.opten2_posy_data = np.append(self.opten2_posy_data, opten2_posy)
         
         # update time
         self.time_data = np.append(self.time_data, time.time() - self.time_start)
+        try: self.fps_label.setText(f"{round(1/(self.time_data[-1] - self.time_data[-2]))} fps")
+        except: pass
 
         # update plot
         plot_range = 60

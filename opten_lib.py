@@ -3,7 +3,6 @@ import serial
 import time
 
 import numpy as np
-import pyqtgraph as pg
 from PyQt5.QtCore import QThread
 
 
@@ -81,76 +80,109 @@ class OpticalDuo:
         self.port1 = OPT1
         self.port2 = OPT2
         self.baudrate = BAUDRATE
+        self.serial_reader1, self.serial_reader2 = None, None
+        self.serial_com1, self.serial_com2 = None, None
+        self.connections = {self.port1: False, self.port2: False}
+        
+    def connect_serial(self, port):
+        try:
+            serial_com = serial.Serial(port, self.baudrate)
+            print(f"Connected to {port}")
+        except serial.SerialException as e:
+            print(f"{port} not available")
+            return None
+        else:
+            serial_com.setDTR(False)
+            time.sleep(1)
+            serial_com.flushInput()
+            serial_com.setDTR(True)
+            print(f"{port} is reset")
+            return serial_com
 
     def connect(self):
-        try:
-            self.serial_com1 = serial.Serial(self.port1, self.baudrate)
-            print(f"Connected to {self.port1}")
-        except serial.SerialException:
-            raise Exception(f"{self.port1} not available")
-        else:
-            self.serial_com1.setDTR(False)
-            time.sleep(1)
-            self.serial_com1.flushInput()
-            self.serial_com1.setDTR(True)
-            print(f"{self.port1} reset")
         
-        try:
-            self.serial_com2 = serial.Serial(self.port2, self.baudrate)
-            print(f"Connected to {self.port2}")
-        except serial.SerialException:
-            raise Exception(f"{self.port2} not available")
-        else:
-            self.serial_com2.setDTR(False)
-            time.sleep(1)
-            self.serial_com2.flushInput()
-            self.serial_com2.setDTR(True)
-            print(f"{self.port2} reset")
+        self.serial_com1 = self.connect_serial(self.port1)
+        self.serial_com2 = self.connect_serial(self.port2)
+        
+        if self.serial_com1 is not None:
+            self.connections[self.port1] = True
+        if self.serial_com2 is not None:
+            self.connections[self.port2] = True
+            
+        return self.connections[self.port1], self.connections[self.port2]
             
     def start_burst(self):
-        
         print("\nStarting optical encoders in burst mode")
+        
         self.connect()
+        if not self.connections[self.port1] and not self.connections[self.port2]:
+            print("No optical encoders available")
+            return False
         
-        self.serial_reader1 = SerialReader(self.serial_com1, mode="burst")
-        self.serial_reader1.start()
-        
-        self.serial_reader2 = SerialReader(self.serial_com2, mode="burst", flip_x=True)
-        self.serial_reader2.start()
-        
-        while self.serial_reader1.initialised is False or self.serial_reader2.initialised is False:
-            time.sleep(0.1)
+        if self.connections[self.port1]:
+            self.serial_reader1 = SerialReader(self.serial_com1, mode="burst")
+            self.serial_reader1.start()
+        if self.connections[self.port2]:
+            self.serial_reader2 = SerialReader(self.serial_com2, mode="burst", flip_x=True)
+            self.serial_reader2.start()
+            
+        if self.connections[self.port1]:
+            while self.serial_reader1.initialised is False:
+                time.sleep(0.1)
+        if self.connections[self.port2]:
+            while self.serial_reader2.initialised is False:
+                time.sleep(0.1)
         time.sleep(1.5)
-        print("Optical encoders ready\n")
+        
+        if self.connections[self.port1]:
+            print(f"{self.port1} optical encoder ready")
+        if self.connections[self.port2]:
+            print(f"{self.port2} optical encoder ready\n")
             
     def start_camera(self):
-        
         print("\nStarting optical encoders in camera mode")
+        
         self.connect()
+        if not self.connections[self.port1] and not self.connections[self.port2]:
+            print("No optical encoders available")
+            return False
         
-        self.serial_reader1 = SerialReader(self.serial_com1, mode="camera")
-        self.serial_reader1.start()
-        
-        self.serial_reader2 = SerialReader(self.serial_com2, mode="camera")
-        self.serial_reader2.start()
-        
-        while self.serial_reader1.initialised is False or self.serial_reader2.initialised is False:
-            time.sleep(0.1)
+        if self.connections[self.port1]:
+            self.serial_reader1 = SerialReader(self.serial_com1, mode="camera")
+            self.serial_reader1.start()
+        if self.connections[self.port2]:
+            self.serial_reader2 = SerialReader(self.serial_com2, mode="camera")
+            self.serial_reader2.start()
+            
+        if self.connections[self.port1]:
+            while self.serial_reader1.initialised is False:
+                time.sleep(0.1)
+        if self.connections[self.port2]:
+            while self.serial_reader2.initialised is False:
+                time.sleep(0.1)
         time.sleep(1.5)
-        print("Optical encoders ready\n")
+        
+        if self.connections[self.port1]:
+            print(f"{self.port1} optical encoder ready")
+        if self.connections[self.port2]:
+            print(f"{self.port2} optical encoder ready\n")
         
     def close(self):
         
-        print("\nClosing optical encoders")
-        self.serial_reader1.stop()
-        self.serial_reader1.wait()
-        self.serial_com1.close()
-        print(f"{self.port1} closed")
+        if not self.connections[self.port1] and not self.connections[self.port2]:
+            return
         
-        self.serial_reader2.stop()
-        self.serial_reader2.wait()
-        self.serial_com2.close()
-        print(f"{self.port2} closed")
+        print("\nClosing optical encoders")
+        if self.connections[self.port1]:
+            self.serial_reader1.stop()
+            self.serial_reader1.wait()
+            self.serial_com1.close()
+            print(f"{self.port1} closed")
+        if self.connections[self.port2]:
+            self.serial_reader2.stop()
+            self.serial_reader2.wait()
+            self.serial_com2.close()
+            print(f"{self.port2} closed")
         
         
 if __name__ == "__main__":

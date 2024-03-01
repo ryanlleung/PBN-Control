@@ -124,6 +124,7 @@ class MainWindow(QWidget):
         self.dnx.enable_torque(DXL1_ID)
         self.dnx.enable_torque(DXL2_ID)
         
+        
         self.opt = OpticalDuo()
         self.opt.start_burst()
         
@@ -138,6 +139,7 @@ class MainWindow(QWidget):
         self.opten1_posx_data, self.opten2_posx_data = np.array([]), np.array([])
         self.opten1_posy_data, self.opten2_posy_data = np.array([]), np.array([])
         
+        self.keyboard_speed = 30        
         self.initUI()
         
         if self.have_gamepad():
@@ -485,6 +487,16 @@ class MainWindow(QWidget):
     def update_motor2_scale(self):
         self.motor2_pos_scale = self.motor2_scale_value.value()
         
+    def reset_time(self):
+        self.time_start = time.time()
+        self.time_data = np.array([0])
+        self.motor1_apos_data = np.array([0])
+        self.opten1_posx_data = np.array([0])
+        self.opten1_posy_data = np.array([0])
+        self.motor2_apos_data = np.array([0])
+        self.opten2_posx_data = np.array([0])
+        self.opten2_posy_data = np.array([0])
+        
     def update_values(self):
             
         # update adjusted motor values
@@ -533,13 +545,13 @@ class MainWindow(QWidget):
         boost_multiplier = 2 if event.modifiers() & Qt.ShiftModifier else 1
 
         if event.key() == Qt.Key_Q:
-            self.motor1_vel_value.setText(str(50 * boost_multiplier))
+            self.motor1_vel_value.setText(str(self.keyboard_speed * boost_multiplier))
         elif event.key() == Qt.Key_W:
-            self.motor1_vel_value.setText(str(-50 * boost_multiplier))
+            self.motor1_vel_value.setText(str(-self.keyboard_speed * boost_multiplier))
         elif event.key() == Qt.Key_S:
-            self.motor2_vel_value.setText(str(50 * boost_multiplier))
+            self.motor2_vel_value.setText(str(self.keyboard_speed * boost_multiplier))
         elif event.key() == Qt.Key_A:
-            self.motor2_vel_value.setText(str(-50 * boost_multiplier))
+            self.motor2_vel_value.setText(str(-self.keyboard_speed * boost_multiplier))
         elif event.key() == Qt.Key_T:
             self.motor1_switch.toggle()
         elif event.key() == Qt.Key_Y:
@@ -547,6 +559,8 @@ class MainWindow(QWidget):
         elif event.key() == Qt.Key_R:
             self.reset_motor1_all()
             self.reset_motor2_all()
+        elif event.key() == Qt.Key_M:
+            self.reset_time()
         elif event.key() == Qt.Key_Escape:
             self.closeEvent(QCloseEvent())
 

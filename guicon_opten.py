@@ -5,7 +5,7 @@ import time
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as pl
 import pyqtgraph as pg
 
 from opten_lib import *
@@ -128,7 +128,7 @@ class MainWindow(QWidget):
         self.opt = OpticalDuo()
         self.opt.start_burst()
         
-        self.motor1_pos_scale, self.motor2_pos_scale = 52.5, 52.5
+        self.motor1_pos_scale, self.motor2_pos_scale = 55.85, 55.85
         self.motor1_apos = -self.dnx.get_position(DXL1_ID)/self.motor1_pos_scale
         self.motor2_apos = -self.dnx.get_position(DXL2_ID)/self.motor2_pos_scale*-1
         self.opten1_posx, self.opten2_posx = 0, 0

@@ -5,6 +5,7 @@ from dynamixel_sdk import *                    # Uses Dynamixel SDK library
 
 # Control table address
 ADDR_OPERATING_MODE =         11
+ADDR_CURRENT_LIMIT =          38
 
 ADDR_TORQUE_ENABLE =          64
 ADDR_LED =                    65
@@ -28,6 +29,7 @@ ADDR_PRESENT_INPUT_VOLTAGE =  144
 ADDR_PRESENT_TEMPERATURE =    146
 
 # Data Byte Length
+LEN_CURRENT_LIMIT       = 2
 LEN_GOAL_POSITION       = 4
 LEN_PRESENT_POSITION    = 4
 LEN_GOAL_VELOCITY       = 4
@@ -67,10 +69,9 @@ class Dynamixel:
                                                ADDR_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
         self.sync_read_temperature = GroupSyncRead(self.port_handler, self.packet_handler,
                                                    ADDR_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
-        self.op_mode = "vel"
-        self.set_mode(DXL1_ID, "vel")
-        self.set_mode(DXL2_ID, "vel")
-
+        self.motor1_mode = None
+        self.motor2_mode = None
+        
     def open_port(self):
         if self.port_handler.openPort():
             print("Attempting to open port")
@@ -87,6 +88,14 @@ class Dynamixel:
     def close_port(self):
         self.port_handler.closePort()
         print("Attempting to close port")
+        
+    def reboot(self, id):
+        comm_result, error = self.packet_handler.reboot(self.port_handler, id)
+        if comm_result != COMM_SUCCESS:
+            print("%s" % self.packet_handler.getTxRxResult(comm_result))
+        elif error != 0:
+            print("%s" % self.packet_handler.getRxPacketError(error))
+        print(f"Rebooted ID {id}")
 
     def _write_register(self, id, address, value):
         comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, address, value)
@@ -113,11 +122,27 @@ class Dynamixel:
         self._set_torque(id, False)
         self.turn_LED_off(id)
         print(f"Torque disabled for ID {id}")
+        
+    def set_current_limit(self, id, current):
+        self.disable_torque(id) # Torque must be disabled to change current limit
+        current = int(current)
+        comm_result, error = self.packet_handler.write2ByteTxRx(self.port_handler, id, ADDR_CURRENT_LIMIT, current)
+        if comm_result != COMM_SUCCESS:
+            print("%s" % self.packet_handler.getTxRxResult(comm_result))
+        elif error != 0:
+            print("%s" % self.packet_handler.getRxPacketError(error))
+        else:
+            print(f"Current limit set for ID {id}")
+        self.reboot(id) # Reboot required for current limit to take effect
+        time.sleep(0.1)
+        self.enable_torque(id) # Re-enable torque after reboot
 
     def set_mode(self, id, mode):
-        if self.op_mode == mode:
+        if id == DXL1_ID and self.motor1_mode == mode:
             return
-        self.disable_torque(id)
+        if id == DXL2_ID and self.motor2_mode == mode:
+            return
+        self.disable_torque(id) # Torque must be disabled to change mode
         mode_settings = {
             "pos": (3, "Position"), # Not useful
             "extpos": (4, "Extended position"),
@@ -130,11 +155,14 @@ class Dynamixel:
             register_value, mode_description = mode_settings[mode]
             self._write_register(id, ADDR_OPERATING_MODE, register_value)
             print(f"{mode_description} mode set for ID {id}")
-            self.op_mode = mode
+            if id == DXL1_ID:
+                self.motor1_mode = mode
+            elif id == DXL2_ID:
+                self.motor2_mode = mode
         else:
             print("Invalid mode")
             quit()
-        self.enable_torque(id)
+        self.enable_torque(id) # Re-enable torque after changing mode
 
     #### LED ####
 
@@ -148,7 +176,7 @@ class Dynamixel:
     def turn_LED_off(self, id):
         self._set_LED(id, False)
         
-    ### Information ###
+    #### Information ####
     
     def get_current(self, id):
         self.sync_read_current.clearParam()
@@ -279,6 +307,12 @@ class Dynamixel:
             
     #### Higher Level ####
     
+    def set_dualpos(self, pos1, pos2, mode="curpos"):
+        self.set_mode(DXL1_ID, mode)
+        self.set_mode(DXL2_ID, mode)
+        self.set_position(DXL1_ID, -pos1, mode)
+        self.set_position(DXL2_ID, pos2, mode)        
+    
     def set_dualvel(self, vel1, vel2, dur, brake=True):
         BUFF = 0.2
         if dur < BUFF:
@@ -306,33 +340,39 @@ if __name__ == "__main__":
 
     dnx = Dynamixel()
     dnx.open_port()
-
+    
     dnx.enable_torque(DXL1_ID)
     dnx.enable_torque(DXL2_ID)
     
+    # #### Extended Position and Current Position Demo ####
+    # dnx.set_current_limit(DXL2_ID, 50)
     # dnx.set_position(DXL2_ID, 0)
     # time.sleep(2)
     # print(f"Position: {dnx.get_position(DXL2_ID)}")
     
     # print("Starting")
-    # dnx.set_position(DXL2_ID, 5000)
+    # dnx.set_position(DXL2_ID, 5000, "curpos")
     # print(f"Position: {dnx.get_position(DXL2_ID)}")
+    # time.sleep(2)
+    # dnx.set_position(DXL2_ID, 0, "curpos")
     # time.sleep(2)
     # print(f"Position: {dnx.get_position(DXL2_ID)}")
     
-    # dnx.set_velocity(DXL1_ID, 200)
+    # #### Velocity Demo ####    
+    # dnx.set_velocity(DXL2_ID, 200)
     # time.sleep(2)
-    # dnx.set_velocity(DXL1_ID, 0)
+    # dnx.set_velocity(DXL2_ID, 0)
     
-    # positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
-    # print(f"Positions: {positions}")
-    # dnx.set_dualvel(200, 100, 1)
-    # positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
-    # print(f"Positions: {positions}")
-    # dnx.set_dualvel(-200, -100, 1)
-    # positions = [dnx.get_position(DXL1_ID), dnx.get_position(DXL2_ID)]
-    # print(f"Positions: {positions}")
+    #### Dualpos Demo ####    
+    dnx.set_dualpos(2000, 2000, "curpos")
+    time.sleep(2)
+    print(f"Position 1: {dnx.get_position(DXL1_ID)}, Position 2: {dnx.get_position(DXL2_ID)}")
+    
+    dnx.set_dualpos(0, 0, "curpos")
+    time.sleep(2)
+    print(f"Position 1: {dnx.get_position(DXL1_ID)}, Position 2: {dnx.get_position(DXL2_ID)}")
 
+    # #### Dualvel Demo ####
     # dnx.set_dualvel(50, 50, 1)
     # dnx.set_dualvel(-50, -50, 1.05)
     # dnx.set_dualvel(50, 0, 1)

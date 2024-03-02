@@ -1,5 +1,6 @@
 
 import serial
+import threading
 import time
 
 import numpy as np
@@ -25,7 +26,7 @@ class SerialReader(QThread):
         self.mode = mode
         self.running = True
         self.initialised = False
-        # self.lock = threading.Lock()
+        self.lock = threading.Lock()
 
     def run(self):
         while self.running:
@@ -55,16 +56,15 @@ class SerialReader(QThread):
             self.check_initialised(input_line)
         else:
             if self.mode == "burst":
-                dy, dx = map(int, input_line.split(' '))
-                if self.flip_x:
-                    dx = -dx
-                if self.flip_y:
-                    dy = -dy
+                with self.lock:
+                    dy, dx = map(int, input_line.split(' '))
+                    if self.flip_x:
+                        dx = -dx
+                    if self.flip_y:
+                        dy = -dy
+                    self.x += dx * 25.4 / self.dpi
+                    self.y += dy * 25.4 / self.dpi
                     
-                # with self.lock:
-                self.x += dx * 25.4 / self.dpi
-                self.y += dy * 25.4 / self.dpi
-                
             elif self.mode == "camera":
                 raw = input_line.split(' ')
                 if len(raw) == 1297:

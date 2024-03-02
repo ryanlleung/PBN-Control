@@ -161,5 +161,4 @@ cython_debug/
 
 mlgs/
 spring/
-analysis/video/
-analysis/_old/
+analysis/

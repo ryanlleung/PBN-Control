@@ -68,6 +68,8 @@ class Dynamixel:
         self.sync_read_temperature = GroupSyncRead(self.port_handler, self.packet_handler,
                                                    ADDR_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
         self.op_mode = "vel"
+        self.set_mode(DXL1_ID, "vel")
+        self.set_mode(DXL2_ID, "vel")
 
     def open_port(self):
         if self.port_handler.openPort():

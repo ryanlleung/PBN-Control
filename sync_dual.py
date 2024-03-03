@@ -16,6 +16,8 @@ ADDR_HARDWARE_ERROR_STATUS =  70
 ADDR_GOAL_PWM =               100
 ADDR_GOAL_CURRENT =           102
 ADDR_GOAL_VELOCITY =          104
+ADDR_PROFILE_ACCELERATION =   108
+ADDR_PROFILE_VELOCITY =       112
 ADDR_GOAL_POSITION =          116
 
 ADDR_MOVING =                 122
@@ -30,11 +32,15 @@ ADDR_PRESENT_TEMPERATURE =    146
 
 # Data Byte Length
 LEN_CURRENT_LIMIT       = 2
-LEN_GOAL_POSITION       = 4
-LEN_PRESENT_POSITION    = 4
+
 LEN_GOAL_VELOCITY       = 4
-LEN_PRESENT_VELOCITY    = 4
+LEN_PROFILE_ACCELERATION = 4
+LEN_PROFILE_VELOCITY    = 4
+LEN_GOAL_POSITION       = 4
+
 LEN_PRESENT_CURRENT     = 2
+LEN_PRESENT_VELOCITY    = 4
+LEN_PRESENT_POSITION    = 4
 LEN_PRESENT_INPUT_VOLTAGE = 2
 LEN_PRESENT_TEMPERATURE = 2
 
@@ -69,6 +75,14 @@ class Dynamixel:
                                                ADDR_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
         self.sync_read_temperature = GroupSyncRead(self.port_handler, self.packet_handler,
                                                    ADDR_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
+        self.sync_read_current_limit = GroupSyncRead(self.port_handler, self.packet_handler,
+                                                        ADDR_CURRENT_LIMIT, LEN_CURRENT_LIMIT)
+        self.sync_read_profile_acceleration = GroupSyncRead(self.port_handler, self.packet_handler,
+                                                            ADDR_PROFILE_ACCELERATION, LEN_PROFILE_ACCELERATION)
+        self.sync_read_profile_velocity = GroupSyncRead(self.port_handler, self.packet_handler,
+                                                        ADDR_PROFILE_VELOCITY, LEN_PROFILE_VELOCITY)
+        self.motor1_pos0 = 0
+        self.motor2_pos0 = 0
         self.motor1_mode = None
         self.motor2_mode = None
         
@@ -95,7 +109,8 @@ class Dynamixel:
             print("%s" % self.packet_handler.getTxRxResult(comm_result))
         elif error != 0:
             print("%s" % self.packet_handler.getRxPacketError(error))
-        print(f"Rebooted ID {id}")
+        time.sleep(0.5)
+        print(f"ID {id} rebooted")
 
     def _write_register(self, id, address, value):
         comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, id, address, value)
@@ -116,14 +131,35 @@ class Dynamixel:
     def enable_torque(self, id):
         self._set_torque(id, True)
         self.turn_LED_on(id)
-        print(f"Torque enabled for ID {id}")
+        print(f"ID {id} torque enabled")
 
     def disable_torque(self, id):
         self._set_torque(id, False)
         self.turn_LED_off(id)
-        print(f"Torque disabled for ID {id}")
+        print(f"ID {id} torque disabled")
+    
+    # Reads current limit (1 = 1 mA)
+    def get_current_limit(self, id):
+        self.sync_read_current_limit.clearParam()
+        add_param_result = self.sync_read_current_limit.addParam(id)
+        if add_param_result != True:
+            print("[ID:%03d] groupSyncRead addparam failed" % id)
+            quit()
+        comm_result = self.sync_read_current_limit.txRxPacket()
+        if comm_result != COMM_SUCCESS:
+            print("%s" % self.packet_handler.getTxRxResult(comm_result))
+        getdata_result = self.sync_read_current_limit.isAvailable(id, ADDR_CURRENT_LIMIT, LEN_CURRENT_LIMIT)
+        if getdata_result != True:
+            print("[ID:%03d] groupSyncRead getdata failed" % id)
+            quit()
+        self.current_limit = self.sync_read_current_limit.getData(id, ADDR_CURRENT_LIMIT, LEN_CURRENT_LIMIT)
+        return self.current_limit
         
+    # Sets current limit (1 = 1 mA)
     def set_current_limit(self, id, current):
+        self.get_current_limit(id)
+        if current == self.current_limit:
+            return
         self.disable_torque(id) # Torque must be disabled to change current limit
         current = int(current)
         comm_result, error = self.packet_handler.write2ByteTxRx(self.port_handler, id, ADDR_CURRENT_LIMIT, current)
@@ -132,11 +168,11 @@ class Dynamixel:
         elif error != 0:
             print("%s" % self.packet_handler.getRxPacketError(error))
         else:
-            print(f"Current limit set for ID {id}")
+            print(f"ID {id} current limit set to {current}")
         self.reboot(id) # Reboot required for current limit to take effect
-        time.sleep(0.1)
         self.enable_torque(id) # Re-enable torque after reboot
 
+    # Sets mode
     def set_mode(self, id, mode):
         if id == DXL1_ID and self.motor1_mode == mode:
             return
@@ -154,7 +190,7 @@ class Dynamixel:
         if mode in mode_settings:
             register_value, mode_description = mode_settings[mode]
             self._write_register(id, ADDR_OPERATING_MODE, register_value)
-            print(f"{mode_description} mode set for ID {id}")
+            print(f"ID {id} set to {mode_description} mode")
             if id == DXL1_ID:
                 self.motor1_mode = mode
             elif id == DXL2_ID:
@@ -178,6 +214,7 @@ class Dynamixel:
         
     #### Information ####
     
+    # Reads present current (1 = 1 mA)
     def get_current(self, id):
         self.sync_read_current.clearParam()
         add_param_result = self.sync_read_current.addParam(id)
@@ -197,6 +234,7 @@ class Dynamixel:
             current -= 65536
         return current
     
+    # Reads present input voltage (1 = 0.1V)
     def get_voltage(self, id):
         self.sync_read_voltage.clearParam()
         add_param_result = self.sync_read_voltage.addParam(id)
@@ -213,6 +251,7 @@ class Dynamixel:
         voltage = self.sync_read_voltage.getData(id, ADDR_PRESENT_INPUT_VOLTAGE, LEN_PRESENT_INPUT_VOLTAGE)
         return voltage
     
+    # Reads present temperature (1 = 1°C)
     def get_temperature(self, id):
         self.sync_read_temperature.clearParam()
         add_param_result = self.sync_read_temperature.addParam(id)
@@ -228,6 +267,66 @@ class Dynamixel:
             quit()
         temperature = self.sync_read_temperature.getData(id, ADDR_PRESENT_TEMPERATURE, LEN_PRESENT_TEMPERATURE)
         return temperature
+    
+    #### Profile ####
+    
+    # Reads profile acceleration (1 = 214.577 rpm/m = 0.3745 rad/s^2)
+    def get_profile_acceleration(self, id):
+        self.sync_read_profile_acceleration.clearParam()
+        add_param_result = self.sync_read_profile_acceleration.addParam(id)
+        if add_param_result != True:
+            print("[ID:%03d] groupSyncRead addparam failed" % id)
+            quit()
+        comm_result = self.sync_read_profile_acceleration.txRxPacket()
+        if comm_result != COMM_SUCCESS:
+            print("%s" % self.packet_handler.getTxRxResult(comm_result))
+        getdata_result = self.sync_read_profile_acceleration.isAvailable(id, ADDR_PROFILE_ACCELERATION, LEN_PROFILE_ACCELERATION)
+        if getdata_result != True:
+            print("[ID:%03d] groupSyncRead getdata failed" % id)
+            quit()
+        acceleration = self.sync_read_profile_acceleration.getData(id, ADDR_PROFILE_ACCELERATION, LEN_PROFILE_ACCELERATION)
+        return acceleration
+    
+    # Sets profile acceleration (1 = 214.577 rpm/m = 0.3745 rad/s^2)
+    # !!! Resets after changing mode !!!
+    def set_profile_acceleration(self, id, acceleration):
+        acceleration = int(acceleration)
+        comm_result, error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_PROFILE_ACCELERATION, acceleration)
+        if comm_result != COMM_SUCCESS:
+            print("%s" % self.packet_handler.getTxRxResult(comm_result))
+        elif error != 0:
+            print("%s" % self.packet_handler.getRxPacketError(error))
+        else:
+            print(f"ID {id} profile acceleration set to {acceleration}")
+    
+    # Reads profile velocity (1 = 0.229 rpm = 0.02398 rad/s)
+    def get_profile_velocity(self, id):
+        self.sync_read_profile_velocity.clearParam()
+        add_param_result = self.sync_read_profile_velocity.addParam(id)
+        if add_param_result != True:
+            print("[ID:%03d] groupSyncRead addparam failed" % id)
+            quit()
+        comm_result = self.sync_read_profile_velocity.txRxPacket()
+        if comm_result != COMM_SUCCESS:
+            print("%s" % self.packet_handler.getTxRxResult(comm_result))
+        getdata_result = self.sync_read_profile_velocity.isAvailable(id, ADDR_PROFILE_VELOCITY, LEN_PROFILE_VELOCITY)
+        if getdata_result != True:
+            print("[ID:%03d] groupSyncRead getdata failed" % id)
+            quit()
+        velocity = self.sync_read_profile_velocity.getData(id, ADDR_PROFILE_VELOCITY, LEN_PROFILE_VELOCITY)
+        return velocity
+    
+    # Sets profile velocity (1 = 0.229 rpm = 0.02398 rad/s)
+    # !!! Resets after changing mode !!!
+    def set_profile_velocity(self, id, velocity):
+        velocity = int(velocity)
+        comm_result, error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_PROFILE_VELOCITY, velocity)
+        if comm_result != COMM_SUCCESS:
+            print("%s" % self.packet_handler.getTxRxResult(comm_result))
+        elif error != 0:
+            print("%s" % self.packet_handler.getRxPacketError(error))
+        else:
+            print(f"ID {id} profile velocity set to {velocity}")
 
     #### Position ####
 
@@ -267,6 +366,14 @@ class Dynamixel:
         comm_result = self.sync_write_position.txPacket()
         if comm_result != COMM_SUCCESS:
             print("%s" % self.packet_handler.getTxRxResult(comm_result))
+    
+    # Homes motor and sets home position
+    def home_position(self, id):
+        if id == DXL1_ID:
+            self.motor1_pos0 = self.get_position(id)
+        elif id == DXL2_ID:
+            self.motor2_pos0 = self.get_position(id)
+        print(f"ID {id} homed")
 
     #### Velocity ####
 
@@ -310,8 +417,8 @@ class Dynamixel:
     def set_dualpos(self, pos1, pos2, mode="curpos"):
         self.set_mode(DXL1_ID, mode)
         self.set_mode(DXL2_ID, mode)
-        self.set_position(DXL1_ID, -pos1, mode)
-        self.set_position(DXL2_ID, pos2, mode)        
+        self.set_position(DXL1_ID, -pos1 + self.motor1_pos0, mode)
+        self.set_position(DXL2_ID, pos2 + self.motor1_pos0, mode)        
     
     def set_dualvel(self, vel1, vel2, dur, brake=True):
         BUFF = 0.2
@@ -343,7 +450,7 @@ if __name__ == "__main__":
     
     dnx.enable_torque(DXL1_ID)
     dnx.enable_torque(DXL2_ID)
-    
+
     # #### Extended Position and Current Position Demo ####
     # dnx.set_current_limit(DXL2_ID, 50)
     # dnx.set_position(DXL2_ID, 0)
@@ -363,14 +470,42 @@ if __name__ == "__main__":
     # time.sleep(2)
     # dnx.set_velocity(DXL2_ID, 0)
     
-    #### Dualpos Demo ####    
-    dnx.set_dualpos(2000, 2000, "curpos")
-    time.sleep(2)
-    print(f"Position 1: {dnx.get_position(DXL1_ID)}, Position 2: {dnx.get_position(DXL2_ID)}")
+    #### Profile velocity and acceleration Demo ####
     
-    dnx.set_dualpos(0, 0, "curpos")
-    time.sleep(2)
-    print(f"Position 1: {dnx.get_position(DXL1_ID)}, Position 2: {dnx.get_position(DXL2_ID)}")
+    dnx.set_mode(DXL1_ID, "extpos")
+    dnx.set_mode(DXL2_ID, "extpos")
+    
+    dnx.set_profile_acceleration(DXL1_ID, 20)
+    dnx.set_profile_acceleration(DXL2_ID, 20)
+    dnx.set_profile_velocity(DXL1_ID, 200)
+    dnx.set_profile_velocity(DXL2_ID, 200)
+    
+    dnx.set_position(DXL1_ID, 1000)
+    time.sleep(5)
+    print(f"Position 1: {dnx.get_position(DXL1_ID)-dnx.motor1_pos0}, Position 2: {dnx.get_position(DXL2_ID)-dnx.motor2_pos0}")
+    dnx.set_position(DXL1_ID, 0)
+    time.sleep(5)
+    print(f"Position 1: {dnx.get_position(DXL1_ID)-dnx.motor1_pos0}, Position 2: {dnx.get_position(DXL2_ID)-dnx.motor2_pos0}")
+    
+    #### Dualpos Demo ####
+    # dnx.set_current_limit(DXL1_ID, 800)
+    # dnx.set_current_limit(DXL2_ID, 800)
+    
+    # dnx.set_profile_acceleration(DXL1_ID, 1)
+    # dnx.set_profile_acceleration(DXL2_ID, 1)
+    # dnx.set_profile_velocity(DXL1_ID, 10)
+    # dnx.set_profile_velocity(DXL2_ID, 10)
+    
+    # dnx.home_position(DXL1_ID)
+    # dnx.home_position(DXL2_ID)
+    
+    # dnx.set_dualpos(500, 0, "extpos")
+    # time.sleep(5)
+    # print(f"Position 1: {dnx.get_position(DXL1_ID)-dnx.motor1_pos0}, Position 2: {dnx.get_position(DXL2_ID)-dnx.motor2_pos0}")
+    
+    # dnx.set_dualpos(0, 0, "extpos")
+    # time.sleep(5)
+    # print(f"Position 1: {dnx.get_position(DXL1_ID)-dnx.motor1_pos0}, Position 2: {dnx.get_position(DXL2_ID)-dnx.motor2_pos0}")
 
     # #### Dualvel Demo ####
     # dnx.set_dualvel(50, 50, 1)

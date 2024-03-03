@@ -35,7 +35,7 @@ class GamepadThread(QThread):
             events = get_gamepad()
             for event in events:
                 if event.code == 'ABS_Y':
-                    drive_value = int(-event.state / 500) ## change scaler here
+                    drive_value = int(event.state / 500) ## change scaler here
                     if abs(drive_value) < self.deadvel:
                         drive_value = 0
                     self.motor1_vel_value.setText(str(drive_value))
@@ -258,9 +258,9 @@ class MainWindow(QWidget):
         elif event.key() == Qt.Key_W:
             self.motor1_vel_value.setText(str(-50 * boost_multiplier))
         elif event.key() == Qt.Key_S:
-            self.motor2_vel_value.setText(str(50 * boost_multiplier))
-        elif event.key() == Qt.Key_A:
             self.motor2_vel_value.setText(str(-50 * boost_multiplier))
+        elif event.key() == Qt.Key_A:
+            self.motor2_vel_value.setText(str(50 * boost_multiplier))
         elif event.key() == Qt.Key_T:
             self.motor1_switch.toggle()
         elif event.key() == Qt.Key_Y:

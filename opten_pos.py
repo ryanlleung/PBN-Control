@@ -23,6 +23,9 @@ dnx.open_port()
 dnx.enable_torque(DXL1_ID)
 dnx.enable_torque(DXL2_ID)
 
+dnx.set_current_limit(DXL1_ID, 800)
+dnx.set_current_limit(DXL2_ID, 800)
+
 #### Opten Init ####
 
 opt = OpticalDuo()
@@ -64,25 +67,25 @@ class DataLogger(threading.Thread):
                 
     def set_velocity(self, id, velocity):
         self.pause_poll = True
-        time.sleep(0.03)
+        time.sleep(0.05)
         dnx.set_velocity(id, velocity)
-        time.sleep(0.03)
+        time.sleep(0.05)
         self.pause_poll = False
         
     def set_2velocity(self, velocity1, velocity2):
         self.pause_poll = True
-        time.sleep(0.03)
+        time.sleep(0.05)
         dnx.set_velocity(DXL1_ID, -velocity1)
-        time.sleep(0.03)
+        time.sleep(0.05)
         dnx.set_velocity(DXL2_ID, velocity2)
-        time.sleep(0.03)
+        time.sleep(0.05)
         self.pause_poll = False
         
     def set_position(self, id, position):
         self.pause_poll = True
-        time.sleep(0.03)
+        time.sleep(0.05)
         dnx.set_position(id, position)
-        time.sleep(0.03)
+        time.sleep(0.05)
         self.pause_poll = False
             
     def save(self, filename=None):
@@ -106,23 +109,30 @@ class DataLogger(threading.Thread):
 motor1_pos0 = dnx.get_position(DXL1_ID)
 motor2_pos0 = dnx.get_position(DXL2_ID)
 
+dnx.set_mode(DXL1_ID, "extpos")
+dnx.set_mode(DXL2_ID, "extpos")
+dnx.set_profile_acceleration(DXL1_ID, 15)
+dnx.set_profile_acceleration(DXL2_ID, 15)
+dnx.set_profile_velocity(DXL1_ID, 500)
+dnx.set_profile_velocity(DXL2_ID, 500)
+
 logger = DataLogger(motor1_pos0, motor2_pos0)
 logger.start()
 print("Data logger started")
 
 time.sleep(1)
-for i in range(10):
-    logger.set_position(DXL1_ID, motor1_pos0 - 2000)
-    time.sleep(1)
+for i in range(5):
+    logger.set_position(DXL1_ID, motor1_pos0 - 1000)
+    time.sleep(2)
     logger.set_position(DXL1_ID, motor1_pos0)
-    time.sleep(1)
+    time.sleep(2)
     
 time.sleep(1)
-for i in range(10):
-    logger.set_position(DXL2_ID, motor2_pos0 + 2000)
-    time.sleep(1)
+for i in range(5):
+    logger.set_position(DXL2_ID, motor2_pos0 - 1000)
+    time.sleep(2)
     logger.set_position(DXL2_ID, motor2_pos0)
-    time.sleep(1)
+    time.sleep(2)
 
 # time.sleep(1)
 # for i in range(5):
@@ -135,6 +145,7 @@ for i in range(10):
 #     logger.set_2velocity(0, 0)
 #     time.sleep(1)
 
+
 filename = logger.save()
 logger.stop()
 logger.join()
@@ -146,7 +157,7 @@ x_motor1 = df_motor['Motor1 Pos'].values
 x_opten1 = df_motor['Opten1 PosX'].values
 y_opten1 = df_motor['Opten1 PosY'].values
 x_motor2 = df_motor['Motor2 Pos'].values
-x_opten2 = -df_motor['Opten2 PosX'].values
+x_opten2 = df_motor['Opten2 PosX'].values
 y_opten2 = df_motor['Opten2 PosY'].values
 
 fig, ax = plt.subplots(2, 1, figsize=(10, 10))

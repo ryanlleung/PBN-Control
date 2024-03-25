@@ -139,7 +139,7 @@ class MainWindow(QWidget):
         self.opten1_posx_data, self.opten2_posx_data = np.array([]), np.array([])
         self.opten1_posy_data, self.opten2_posy_data = np.array([]), np.array([])
         
-        self.keyboard_speed = 30        
+        self.keyboard_speed = 1       
         self.initUI()
         
         if self.have_gamepad():

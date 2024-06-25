@@ -74,9 +74,8 @@ class Dynamixel:
         print("Port opened and baudrate set")
 
     def close_port(self):
-        if not self.port_handler.closePort():
-            raise IOError("Failed to close port")
-        print("Port closed")
+        self.port_handler.closePort()
+        print("Attempting to close port")
 
     def reboot(self, motor_id):
         comm_result, error = self.packet_handler.reboot(self.port_handler, motor_id)
@@ -276,8 +275,11 @@ if __name__ == "__main__":
         dnx.open_port()
         dnx.enable_torque(DXL1_ID)
         dnx.enable_torque(DXL2_ID)
-        print("Sleeping for 5 seconds")
-        time.sleep(5)
+        
+        dnx.set_velocity(DXL2_ID, 20)
+        time.sleep(2)
+        dnx.set_velocity(DXL2_ID, 0)
+        
     finally:
         dnx.disable_torque(DXL1_ID)
         dnx.disable_torque(DXL2_ID)

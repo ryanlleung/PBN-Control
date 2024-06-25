@@ -18,10 +18,10 @@ Looking from the rear end of the PBN:
 
 ## Device Configuration
 Set ID and device name in config.json file.
-DXL1_ID: ID of portside motor on the first drive set (default: 2)
-DXL2_ID: ID of starboard motor on the first drive set (default: 3)
-DXL3_ID: ID of portside motor on the second drive set (default: 1)
-DXL4_ID: ID of starboard motor on the second drive set (default: 4)
+- DXL1_ID: ID of portside motor on the first drive set (default: 2)
+- DXL2_ID: ID of starboard motor on the first drive set (default: 3)
+- DXL3_ID: ID of portside motor on the second drive set (default: 1)
+- DXL4_ID: ID of starboard motor on the second drive set (default: 4)
 
 # Optical Sensors
 ## Arduino Library Installation

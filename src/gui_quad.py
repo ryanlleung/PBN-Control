@@ -1,21 +1,20 @@
+
 import sys
 import time
 
 from inputs import get_gamepad
-from motor_ctrl.sync_dual import Dynamixel, DXL1_ID, DXL2_ID
+from motor_ctrl.sync_quad import Dynamixel, DXL1_ID, DXL2_ID, DXL3_ID, DXL4_ID
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 class GamepadThread(QThread):
 
-    def __init__(self, dnx, motor1_switch, motor1_vel_value, motor2_switch, motor2_vel_value):
+    def __init__(self, dnx, motor_switches, motor_vel_values):
         super().__init__()
         self.dnx = dnx
-        self.motor1_switch = motor1_switch
-        self.motor1_vel_value = motor1_vel_value
-        self.motor2_switch = motor2_switch
-        self.motor2_vel_value = motor2_vel_value
+        self.motor_switches = motor_switches
+        self.motor_vel_values = motor_vel_values
         self.deadvel = 10
 
     def run(self):
@@ -23,19 +22,33 @@ class GamepadThread(QThread):
             events = get_gamepad()
             for event in events:
                 if event.code == 'ABS_Y':
-                    drive_value = int(event.state / 500)  # Adjust scaling factor here
+                    drive_value = int(event.state / 500)
                     if abs(drive_value) < self.deadvel:
                         drive_value = 0
-                    self.motor1_vel_value.setText(str(drive_value))
+                    self.motor_vel_values[0].setText(str(drive_value))
                 elif event.code == 'ABS_RY':
-                    drive_value = int(event.state / 500)  # Adjust scaling factor here
+                    drive_value = int(event.state / 500)
                     if abs(drive_value) < self.deadvel:
                         drive_value = 0
-                    self.motor2_vel_value.setText(str(drive_value))
+                    self.motor_vel_values[1].setText(str(drive_value))
+                elif event.code == 'ABS_X':
+                    drive_value = int(event.state / 500)
+                    if abs(drive_value) < self.deadvel:
+                        drive_value = 0
+                    self.motor_vel_values[2].setText(str(drive_value))
+                elif event.code == 'ABS_RX':
+                    drive_value = int(event.state / 500)
+                    if abs(drive_value) < self.deadvel:
+                        drive_value = 0
+                    self.motor_vel_values[3].setText(str(drive_value))
                 elif event.code == 'BTN_START' and event.state == 1:
-                    self.motor1_switch.toggle()
+                    self.motor_switches[0].toggle()
                 elif event.code == 'BTN_SELECT' and event.state == 1:
-                    self.motor2_switch.toggle()
+                    self.motor_switches[1].toggle()
+                elif event.code == 'BTN_MODE' and event.state == 1:
+                    self.motor_switches[2].toggle()
+                elif event.code == 'BTN_THUMBL' and event.state == 1:
+                    self.motor_switches[3].toggle()
 
 
 class MainWindow(QWidget):
@@ -46,35 +59,36 @@ class MainWindow(QWidget):
         self.dnx.open_port()
         self.dnx.enable_torque(DXL1_ID)
         self.dnx.enable_torque(DXL2_ID)
+        self.dnx.enable_torque(DXL3_ID)
+        self.dnx.enable_torque(DXL4_ID)
 
-        self.motor1_switch = QCheckBox()
-        self.motor1_vel_value = QLineEdit('0')
-        self.motor2_switch = QCheckBox()
-        self.motor2_vel_value = QLineEdit('0')
+        self.motor_switches = [QCheckBox() for _ in range(4)]
+        self.motor_vel_values = [QLineEdit('0') for _ in range(4)]
 
         self.initUI()
         if self.have_gamepad():
             self.gamepad_thread = GamepadThread(
-                self.dnx, self.motor1_switch, self.motor1_vel_value, self.motor2_switch, self.motor2_vel_value)
+                self.dnx, self.motor_switches, self.motor_vel_values)
             self.gamepad_thread.start()
 
     def initUI(self):
         motor_box = QHBoxLayout()
 
-        self.motor1_layout = self.create_motor_layout("Motor 1", DXL1_ID, self.motor1_switch, self.motor1_vel_value)
-        self.motor2_layout = self.create_motor_layout("Motor 2", DXL2_ID, self.motor2_switch, self.motor2_vel_value)
-        
-        motor_box.addLayout(self.motor1_layout)
-        motor_box.addLayout(self.motor2_layout)
+        self.motor_layouts = [
+            self.create_motor_layout("Motor 1", DXL1_ID, self.motor_switches[0], self.motor_vel_values[0]),
+            self.create_motor_layout("Motor 2", DXL2_ID, self.motor_switches[1], self.motor_vel_values[1]),
+            self.create_motor_layout("Motor 3", DXL3_ID, self.motor_switches[2], self.motor_vel_values[2]),
+            self.create_motor_layout("Motor 4", DXL4_ID, self.motor_switches[3], self.motor_vel_values[3])
+        ]
+
+        for layout in self.motor_layouts:
+            motor_box.addLayout(layout)
 
         box = QVBoxLayout(self)
         box.addLayout(motor_box)
 
-        # Speed Box Layout
         speed_box = QHBoxLayout()
         speed_label = QLabel("Keyboard Speed")
-        
-        # Create a QSpinBox
         self.speed_input = QSpinBox()
         self.speed_input.setValue(17)
         self.speed_input.setRange(1, 100)
@@ -88,12 +102,12 @@ class MainWindow(QWidget):
         self.setLayout(box)
 
         self.timer = QTimer()
-        self.timer.setInterval(100)  # Interval in milliseconds
+        self.timer.setInterval(100)
         self.timer.timeout.connect(self.update_values)
         self.timer.start()
 
         QApplication.setStyle(QStyleFactory.create('Fusion'))
-        self.setWindowTitle("2-DoF Control GUI")
+        self.setWindowTitle("4-DoF Control GUI")
         self.show()
 
     def create_motor_layout(self, label_text, motor_id, motor_switch, motor_vel_value):
@@ -123,8 +137,12 @@ class MainWindow(QWidget):
         pos_box.addWidget(pos_value)
         if motor_id == DXL1_ID:
             self.motor1_pos_value = pos_value
-        else:
+        elif motor_id == DXL2_ID:
             self.motor2_pos_value = pos_value
+        elif motor_id == DXL3_ID:
+            self.motor3_pos_value = pos_value
+        else:
+            self.motor4_pos_value = pos_value
 
         voltage_box = QHBoxLayout()
         voltage_label = QLabel("Voltage / V")
@@ -135,8 +153,12 @@ class MainWindow(QWidget):
         voltage_box.addWidget(voltage_value)
         if motor_id == DXL1_ID:
             self.motor1_voltage_value = voltage_value
-        else:
+        elif motor_id == DXL2_ID:
             self.motor2_voltage_value = voltage_value
+        elif motor_id == DXL3_ID:
+            self.motor3_voltage_value = voltage_value
+        else:
+            self.motor4_voltage_value = voltage_value
 
         current_box = QHBoxLayout()
         current_label = QLabel("Current / mA")
@@ -147,8 +169,12 @@ class MainWindow(QWidget):
         current_box.addWidget(current_value)
         if motor_id == DXL1_ID:
             self.motor1_current_value = current_value
-        else:
+        elif motor_id == DXL2_ID:
             self.motor2_current_value = current_value
+        elif motor_id == DXL3_ID:
+            self.motor3_current_value = current_value
+        else:
+            self.motor4_current_value = current_value
 
         temp_box = QHBoxLayout()
         temp_label = QLabel("Temp / °C")
@@ -159,8 +185,12 @@ class MainWindow(QWidget):
         temp_box.addWidget(temp_value)
         if motor_id == DXL1_ID:
             self.motor1_temp_value = temp_value
-        else:
+        elif motor_id == DXL2_ID:
             self.motor2_temp_value = temp_value
+        elif motor_id == DXL3_ID:
+            self.motor3_temp_value = temp_value
+        else:
+            self.motor4_temp_value = temp_value
 
         motor_box.addLayout(label_box)
         motor_box.addLayout(vel_box)
@@ -180,75 +210,95 @@ class MainWindow(QWidget):
         return True
 
     def update_values(self):
-        if self.motor1_switch.isChecked() != getattr(self, 'motor1_switch_last', None):
-            self.motor1_switch_last = self.motor1_switch.isChecked()
-            if self.motor1_switch_last:
-                self.dnx.enable_torque(DXL1_ID)
-            else:
-                self.dnx.disable_torque(DXL1_ID)
-        if self.motor2_switch.isChecked() != getattr(self, 'motor2_switch_last', None):
-            self.motor2_switch_last = self.motor2_switch.isChecked()
-            if self.motor2_switch_last:
-                self.dnx.enable_torque(DXL2_ID)
-            else:
-                self.dnx.disable_torque(DXL2_ID)
+        for i, motor_id in enumerate([DXL1_ID, DXL2_ID, DXL3_ID, DXL4_ID]):
+            switch = self.motor_switches[i]
+            if switch.isChecked() != getattr(self, f'motor{i+1}_switch_last', None):
+                setattr(self, f'motor{i+1}_switch_last', switch.isChecked())
+                if switch.isChecked():
+                    self.dnx.enable_torque(motor_id)
+                else:
+                    self.dnx.disable_torque(motor_id)
 
-        self.dnx.set_velocity(DXL1_ID, int(self.motor1_vel_value.text()))
-        self.dnx.set_velocity(DXL2_ID, int(self.motor2_vel_value.text()))
+            self.dnx.set_velocity(motor_id, int(self.motor_vel_values[i].text()))
 
-        self.motor1_pos_value.setText(str(self.dnx.get_position(DXL1_ID)))
-        self.motor1_voltage_value.setText(str(self.dnx.get_voltage(DXL1_ID)))
-        self.motor1_current_value.setText(str(self.dnx.get_current(DXL1_ID)))
-        self.motor1_temp_value.setText(str(self.dnx.get_temperature(DXL1_ID)))
-        self.motor2_pos_value.setText(str(self.dnx.get_position(DXL2_ID)))
-        self.motor2_voltage_value.setText(str(self.dnx.get_voltage(DXL2_ID)))
-        self.motor2_current_value.setText(str(self.dnx.get_current(DXL2_ID)))
-        self.motor2_temp_value.setText(str(self.dnx.get_temperature(DXL2_ID)))
+            pos_value = getattr(self, f'motor{i+1}_pos_value')
+            voltage_value = getattr(self, f'motor{i+1}_voltage_value')
+            current_value = getattr(self, f'motor{i+1}_current_value')
+            temp_value = getattr(self, f'motor{i+1}_temp_value')
+
+            pos_value.setText(str(self.dnx.get_position(motor_id)))
+            voltage_value.setText(str(self.dnx.get_voltage(motor_id)))
+            current_value.setText(str(self.dnx.get_current(motor_id)))
+            temp_value.setText(str(self.dnx.get_temperature(motor_id)))
 
     def keyPressEvent(self, event):
         try:
             speed_value = int(self.speed_input.text())
         except ValueError:
-            speed_value = 17  # Default speed value
+            speed_value = 17
 
         boost_multiplier = 3 if event.modifiers() & Qt.ShiftModifier else 1
         adjusted_speed = int(speed_value * boost_multiplier)
 
         if event.key() == Qt.Key_Q:
-            self.motor1_vel_value.setText(str(-adjusted_speed))
+            self.motor_vel_values[0].setText(str(-adjusted_speed))
         elif event.key() == Qt.Key_W:
-            self.motor1_vel_value.setText(str(adjusted_speed))
+            self.motor_vel_values[0].setText(str(adjusted_speed))
         elif event.key() == Qt.Key_S:
-            self.motor2_vel_value.setText(str(adjusted_speed))
+            self.motor_vel_values[1].setText(str(adjusted_speed))
         elif event.key() == Qt.Key_A:
-            self.motor2_vel_value.setText(str(-adjusted_speed))
+            self.motor_vel_values[1].setText(str(-adjusted_speed))
+        elif event.key() == Qt.Key_R:
+            self.motor_vel_values[2].setText(str(adjusted_speed))
+        elif event.key() == Qt.Key_E:
+            self.motor_vel_values[2].setText(str(-adjusted_speed))
+        elif event.key() == Qt.Key_F:
+            self.motor_vel_values[3].setText(str(adjusted_speed))
+        elif event.key() == Qt.Key_D:
+            self.motor_vel_values[3].setText(str(-adjusted_speed))
         elif event.key() == Qt.Key_M:
-            self.motor1_vel_value.setText(str(-adjusted_speed))
-            self.motor2_vel_value.setText(str(-adjusted_speed))
+            self.motor_vel_values[0].setText(str(-adjusted_speed))
+            self.motor_vel_values[1].setText(str(-adjusted_speed))
+            self.motor_vel_values[2].setText(str(-adjusted_speed))
+            self.motor_vel_values[3].setText(str(-adjusted_speed))
         elif event.key() == Qt.Key_N:
-            self.motor1_vel_value.setText(str(adjusted_speed))
-            self.motor2_vel_value.setText(str(adjusted_speed))
+            self.motor_vel_values[0].setText(str(adjusted_speed))
+            self.motor_vel_values[1].setText(str(adjusted_speed))
+            self.motor_vel_values[2].setText(str(adjusted_speed))
+            self.motor_vel_values[3].setText(str(adjusted_speed))
         elif event.key() == Qt.Key_T:
-            self.motor1_switch.toggle()
+            self.motor_switches[0].toggle()
         elif event.key() == Qt.Key_Y:
-            self.motor2_switch.toggle()
+            self.motor_switches[1].toggle()
+        elif event.key() == Qt.Key_U:
+            self.motor_switches[2].toggle()
+        elif event.key() == Qt.Key_I:
+            self.motor_switches[3].toggle()
         elif event.key() == Qt.Key_Escape:
             QApplication.quit()
 
     def keyReleaseEvent(self, event):
         if event.key() in [Qt.Key_Q, Qt.Key_W]:
-            self.motor1_vel_value.setText('0')
+            self.motor_vel_values[0].setText('0')
         elif event.key() in [Qt.Key_A, Qt.Key_S]:
-            self.motor2_vel_value.setText('0')
+            self.motor_vel_values[1].setText('0')
+        elif event.key() in [Qt.Key_E, Qt.Key_R]:
+            self.motor_vel_values[2].setText('0')
+        elif event.key() in [Qt.Key_D, Qt.Key_F]:
+            self.motor_vel_values[3].setText('0')
         elif event.key() in [Qt.Key_M, Qt.Key_N]:
-            self.motor1_vel_value.setText('0')
-            self.motor2_vel_value.setText('0')
+            self.motor_vel_values[0].setText('0')
+            self.motor_vel_values[1].setText('0')
+            self.motor_vel_values[2].setText('0')
+            self.motor_vel_values[3].setText('0')
 
     def closeEvent(self, event):
         if self.have_gamepad():
             self.gamepad_thread.terminate()
         self.dnx.disable_torque(DXL1_ID)
         self.dnx.disable_torque(DXL2_ID)
+        self.dnx.disable_torque(DXL3_ID)
+        self.dnx.disable_torque(DXL4_ID)
         self.dnx.close_port()
         QApplication.quit()
 

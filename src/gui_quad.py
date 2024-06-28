@@ -8,6 +8,9 @@ from motor_ctrl.sync_quad import Dynamixel, DXL1_ID, DXL2_ID, DXL3_ID, DXL4_ID
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
+DEFAULT_KEY_SPEED = 17
+GAMEPAD_SCALER = 1/500
+
 class GamepadThread(QThread):
 
     def __init__(self, dnx, motor_switches, motor_vel_values):
@@ -22,22 +25,22 @@ class GamepadThread(QThread):
             events = get_gamepad()
             for event in events:
                 if event.code == 'ABS_Y':
-                    drive_value = int(event.state / 500)
+                    drive_value = int(event.state * GAMEPAD_SCALER)
                     if abs(drive_value) < self.deadvel:
                         drive_value = 0
                     self.motor_vel_values[0].setText(str(drive_value))
                 elif event.code == 'ABS_RY':
-                    drive_value = int(event.state / 500)
+                    drive_value = int(event.state * GAMEPAD_SCALER)
                     if abs(drive_value) < self.deadvel:
                         drive_value = 0
                     self.motor_vel_values[1].setText(str(drive_value))
                 elif event.code == 'ABS_X':
-                    drive_value = int(event.state / 500)
+                    drive_value = int(event.state * GAMEPAD_SCALER)
                     if abs(drive_value) < self.deadvel:
                         drive_value = 0
                     self.motor_vel_values[2].setText(str(drive_value))
                 elif event.code == 'ABS_RX':
-                    drive_value = int(event.state / 500)
+                    drive_value = int(event.state * GAMEPAD_SCALER)
                     if abs(drive_value) < self.deadvel:
                         drive_value = 0
                     self.motor_vel_values[3].setText(str(drive_value))
@@ -90,7 +93,7 @@ class MainWindow(QWidget):
         speed_box = QHBoxLayout()
         speed_label = QLabel("Keyboard Speed")
         self.speed_input = QSpinBox()
-        self.speed_input.setValue(17)
+        self.speed_input.setValue(DEFAULT_KEY_SPEED)
         self.speed_input.setRange(1, 100)
         self.speed_input.setFixedWidth(50)
         
@@ -102,7 +105,7 @@ class MainWindow(QWidget):
         self.setLayout(box)
 
         self.timer = QTimer()
-        self.timer.setInterval(100)
+        self.timer.setInterval(50)
         self.timer.timeout.connect(self.update_values)
         self.timer.start()
 
@@ -221,6 +224,7 @@ class MainWindow(QWidget):
 
             self.dnx.set_velocity(motor_id, int(self.motor_vel_values[i].text()))
 
+        for i, motor_id in enumerate([DXL1_ID, DXL2_ID, DXL3_ID, DXL4_ID]):
             pos_value = getattr(self, f'motor{i+1}_pos_value')
             voltage_value = getattr(self, f'motor{i+1}_voltage_value')
             current_value = getattr(self, f'motor{i+1}_current_value')
@@ -235,7 +239,7 @@ class MainWindow(QWidget):
         try:
             speed_value = int(self.speed_input.text())
         except ValueError:
-            speed_value = 17
+            speed_value = DEFAULT_KEY_SPEED
 
         boost_multiplier = 3 if event.modifiers() & Qt.ShiftModifier else 1
         adjusted_speed = int(speed_value * boost_multiplier)
@@ -256,12 +260,12 @@ class MainWindow(QWidget):
             self.motor_vel_values[3].setText(str(adjusted_speed))
         elif event.key() == Qt.Key_D:
             self.motor_vel_values[3].setText(str(-adjusted_speed))
-        elif event.key() == Qt.Key_M:
+        elif event.key() == Qt.Key_N:
             self.motor_vel_values[0].setText(str(-adjusted_speed))
             self.motor_vel_values[1].setText(str(-adjusted_speed))
             self.motor_vel_values[2].setText(str(-adjusted_speed))
             self.motor_vel_values[3].setText(str(-adjusted_speed))
-        elif event.key() == Qt.Key_N:
+        elif event.key() == Qt.Key_M:
             self.motor_vel_values[0].setText(str(adjusted_speed))
             self.motor_vel_values[1].setText(str(adjusted_speed))
             self.motor_vel_values[2].setText(str(adjusted_speed))

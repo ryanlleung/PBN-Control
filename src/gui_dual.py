@@ -223,11 +223,11 @@ class MainWindow(QWidget):
         elif event.key() == Qt.Key_A:
             self.motor2_vel_value.setText(str(-adjusted_speed))
         elif event.key() == Qt.Key_M:
-            self.motor1_vel_value.setText(str(-adjusted_speed))
-            self.motor2_vel_value.setText(str(-adjusted_speed))
-        elif event.key() == Qt.Key_N:
             self.motor1_vel_value.setText(str(adjusted_speed))
             self.motor2_vel_value.setText(str(adjusted_speed))
+        elif event.key() == Qt.Key_N:
+            self.motor1_vel_value.setText(str(-adjusted_speed))
+            self.motor2_vel_value.setText(str(-adjusted_speed))
         elif event.key() == Qt.Key_T:
             self.motor1_switch.toggle()
         elif event.key() == Qt.Key_Y:

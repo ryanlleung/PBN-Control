@@ -8,10 +8,10 @@ with open('src/motor_ctrl/config.json', 'r') as config_file:
     config = json.load(config_file)
 
 # Extract settings from the config dictionary
-DXL1_ID = config['DXL1_ID']
-DXL2_ID = config['DXL2_ID']
-DXL3_ID = config['DXL3_ID']
-DXL4_ID = config['DXL4_ID']
+DXL1_ID = config['DXL3_ID']
+DXL2_ID = config['DXL4_ID']
+DXL3_ID = config['DXL1_ID']
+DXL4_ID = config['DXL2_ID']
 BAUDRATE = config['BAUDRATE']
 DEVICENAME = config['DEVICENAME']
 
@@ -312,9 +312,24 @@ if __name__ == "__main__":
         dnx.enable_torque(DXL3_ID)
         dnx.enable_torque(DXL4_ID)
         
-        dnx.set_velocity(DXL2_ID, 20)
-        time.sleep(2)
-        dnx.set_velocity(DXL2_ID, 0)
+        response = input("Press 1, 2, 3, or 4 to move the corresponding motor: ")
+        
+        if response == "1":
+            dnx.set_velocity(DXL1_ID, 20)
+            time.sleep(2)
+            dnx.set_velocity(DXL1_ID, 0)
+        elif response == "2":
+            dnx.set_velocity(DXL2_ID, 20)
+            time.sleep(2)
+            dnx.set_velocity(DXL2_ID, 0)
+        elif response == "3":
+            dnx.set_velocity(DXL3_ID, 20)
+            time.sleep(2)
+            dnx.set_velocity(DXL3_ID, 0)
+        elif response == "4":
+            dnx.set_velocity(DXL4_ID, 20)
+            time.sleep(2)
+            dnx.set_velocity(DXL4_ID, 0)
         
     finally:
         dnx.disable_torque(DXL1_ID)

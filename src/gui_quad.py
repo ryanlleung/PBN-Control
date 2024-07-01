@@ -8,7 +8,7 @@ from motor_ctrl.sync_quad import Dynamixel, DXL1_ID, DXL2_ID, DXL3_ID, DXL4_ID
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-DEFAULT_KEY_SPEED = 17
+DEFAULT_KEY_SPEED = 33
 GAMEPAD_SCALER = 1/500
 
 class GamepadThread(QThread):
@@ -20,7 +20,7 @@ class GamepadThread(QThread):
         self.motor_vel_values = motor_vel_values
         self.deadvel = 10
 
-    def run(self):
+    def run(self): 
         while True:
             events = get_gamepad()
             for event in events:

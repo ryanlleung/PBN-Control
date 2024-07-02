@@ -58,17 +58,11 @@ class Dynamixel:
         self.motor_modes = {DXL1_ID: None, DXL2_ID: None, DXL3_ID: None, DXL4_ID: None, DXL5_ID: None, DXL6_ID: None}
         
         self.clamp1_pos0 = 0
-        self.clamp1_pos = {"home": 0,
-                           "max": 120000,
-                           "light": 30000,
-                           "medium": 40000,
-                           "heavy": 45000}
         self.clamp2_pos0 = 0
-        self.clamp2_pos = {"home": 0,
-                           "max": 120000,
-                           "light": 30000,
-                           "medium": 40000,
-                           "heavy": 45000}
+        with open('src/motor_ctrl/clamp1_pos.json', 'r') as config_file:
+            self.clamp1_pos = json.load(config_file)
+        with open('src/motor_ctrl/clamp2_pos.json', 'r') as config_file:
+            self.clamp2_pos = json.load(config_file)
         
     def init_sync_handlers(self):
         self.sync_read_position = GroupSyncRead(self.port_handler, self.packet_handler, ADDR["PRESENT_POSITION"], LEN["PRESENT_POSITION"])
@@ -335,22 +329,22 @@ class Dynamixel:
         self.clamp2_pos["max"] = self.get_position(DXL6_ID)
         
     def define_lightclamp1(self):     
-        self.clamp1_pos["light"] = self.get_position(DXL5_ID)
+        self.clamp1_pos["light"] = self.get_position(DXL5_ID) - self.clamp1_pos0
         
     def define_lightclamp2(self):
-        self.clamp2_pos["light"] = self.get_position(DXL6_ID)
+        self.clamp2_pos["light"] = self.get_position(DXL6_ID) - self.clamp2_pos0
         
     def define_mediumclamp1(self):
-        self.clamp1_pos["medium"] = self.get_position(DXL5_ID)
+        self.clamp1_pos["medium"] = self.get_position(DXL5_ID) - self.clamp1_pos0
         
     def define_mediumclamp2(self):
-        self.clamp2_pos["medium"] = self.get_position(DXL6_ID)
+        self.clamp2_pos["medium"] = self.get_position(DXL6_ID) - self.clamp2_pos0
         
     def define_heavyclamp1(self):
-        self.clamp1_pos["heavy"] = self.get_position(DXL5_ID)
+        self.clamp1_pos["heavy"] = self.get_position(DXL5_ID) - self.clamp1_pos0
         
     def define_heavyclamp2(self):
-        self.clamp2_pos["heavy"] = self.get_position(DXL6_ID)
+        self.clamp2_pos["heavy"] = self.get_position(DXL6_ID) - self.clamp2_pos0
         
     def set_clamp(self, desc1, desc2, mode="extpos"):
         if desc1 not in self.clamp1_pos or desc2 not in self.clamp2_pos:
@@ -366,15 +360,50 @@ class Dynamixel:
         if desc not in self.clamp1_pos:
             raise ValueError("Invalid description")
         self.set_mode(DXL5_ID, mode)
+        self.set_profile_velocity(DXL5_ID, 100)
         pos = self.clamp1_pos[desc]
+        print(f"Setting clamp1 to {desc} at {self.clamp1_pos0 + pos}")
         self.set_position(DXL5_ID, self.clamp1_pos0 + pos, mode)
         
     def set_clamp2(self, desc, mode="extpos"):
         if desc not in self.clamp2_pos:
             raise ValueError("Invalid description")
         self.set_mode(DXL6_ID, mode)
+        self.set_profile_velocity(DXL6_ID, 100)
         pos = self.clamp2_pos[desc]
+        print(f"Setting clamp2 to {desc} at {self.clamp2_pos0 + pos}")
         self.set_position(DXL6_ID, self.clamp2_pos0 + pos, mode)
+        
+    def save_clamp1pos(self):
+        with open('src/motor_ctrl/clamp1_pos.json', 'w') as config_file:
+            json.dump(self.clamp1_pos, config_file, indent=2)
+            
+    def save_clamp2pos(self):
+        with open('src/motor_ctrl/clamp2_pos.json', 'w') as config_file:
+            json.dump(self.clamp2_pos, config_file, indent=2)
+        
+    #### Autohome ####
+    
+    def home_clamp1(self, current_limit=35):
+        while True:
+            self.set_velocity(DXL5_ID, -50)
+            current_current = abs(self.get_current(DXL5_ID))
+            print(f"Current: {current_current}")
+            if current_current >= current_limit:
+                break
+        self.set_velocity(DXL5_ID, 0)
+        self.define_homeclamp1()
+        
+    def home_clamp2(self, current_limit=35):
+        while True:
+            self.set_velocity(DXL6_ID, -50)
+            current_current = abs(self.get_current(DXL6_ID))
+            print(f"Current: {current_current}")
+            if current_current >= current_limit:
+                break
+        self.set_velocity(DXL6_ID, 0)
+        self.define_homeclamp2()
+    
 
 #### Main ####
 
@@ -389,19 +418,7 @@ if __name__ == "__main__":
         dnx.enable_torque(DXL5_ID)
         dnx.enable_torque(DXL6_ID)
         
-        dnx.define_homeclamp()
         
-        print("Setting clamps to home position")
-        dnx.set_clamp("home", "home")
-        time.sleep(2)
-        
-        print("Setting clamps to light position")
-        dnx.set_clamp("light", "light")
-        time.sleep(8)
-        
-        print("Setting clamps to home position")
-        dnx.set_clamp("home", "home")
-        time.sleep(8)
         
     finally:
         dnx.disable_torque(DXL1_ID)

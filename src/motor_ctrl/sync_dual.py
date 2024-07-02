@@ -239,12 +239,21 @@ class Dynamixel:
             
     #### Higher Level ####
     
-    def set_dualpos(self, pos1, pos2, mode="curpos"):
+    # Sets the absolute position of both motors
+    def set_dualpos(self, pos1, pos2, mode="extpos"):
         self.set_mode(DXL1_ID, mode)
         self.set_mode(DXL2_ID, mode)
-        self.set_position(DXL1_ID, pos1 + self.motor1_pos0, mode)
-        self.set_position(DXL2_ID, pos2 + self.motor2_pos0, mode)        
+        self.set_position(DXL1_ID, pos1, mode)
+        self.set_position(DXL2_ID, pos2, mode)
     
+    # Sets the relative position of both motors
+    def set_dualrpos(self, rpos1, rpos2, mode="extpos"):
+        self.set_mode(DXL1_ID, mode)
+        self.set_mode(DXL2_ID, mode)
+        self.set_position(DXL1_ID, self.get_position(DXL1_ID)+rpos1, mode)
+        self.set_position(DXL2_ID, self.get_position(DXL2_ID)+rpos2, mode)
+    
+    # Sets the velocity of both motors and stops after a duration
     def set_dualvel(self, vel1, vel2, dur, brake=True):
         BUFF = 0.2
         if dur < BUFF:

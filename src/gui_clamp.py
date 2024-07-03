@@ -120,11 +120,6 @@ class MainWindow(QWidget):
         clamp1_label.setFixedWidth(80)
         clamp1_label.setStyleSheet("font-size: 10pt")
         
-        clamp1_homepos_box = QHBoxLayout()
-        clamp1_homepos_button = QPushButton("Perform Homing Routine")
-        clamp1_homepos_button.clicked.connect(lambda: self.dnx.home_clamp1())
-        clamp1_homepos_box.addWidget(clamp1_homepos_button)
-        
         clamp1_restpos_box = QHBoxLayout()
         clamp1_restpos_label = QLabel("Rest Position")
         clamp1_restpos_label.setFixedWidth(100)
@@ -202,6 +197,14 @@ class MainWindow(QWidget):
         clamp1_savepos_button.clicked.connect(lambda: self.dnx.save_clamp1pos())
         clamp1_savepos_box.addWidget(clamp1_savepos_button)
         
+        clamp1_homepos_box = QHBoxLayout()
+        clamp1_homepos_button = QPushButton("Perform Homing Routine")
+        clamp1_homepos_button.clicked.connect(lambda: self.dnx.home_clamp1())
+        clamp1_gohome_button = QPushButton("Go Home")
+        clamp1_gohome_button.clicked.connect(lambda: self.dnx.set_clamp1("home"))
+        clamp1_homepos_box.addWidget(clamp1_homepos_button)
+        clamp1_homepos_box.addWidget(clamp1_gohome_button)
+        
         clamp1_go_box = QHBoxLayout()
         clamp1_tighten45_button = QPushButton("Tighten 45°")
         clamp1_tighten45_button.clicked.connect(lambda: self.dnx.set_position(DXL5_ID, self.dnx.get_position(DXL5_ID) + 512))
@@ -211,32 +214,24 @@ class MainWindow(QWidget):
         clamp1_tightin23_button.clicked.connect(lambda: self.dnx.set_position(DXL5_ID, self.dnx.get_position(DXL5_ID) + 256))
         clamp1_loosen23_button = QPushButton("Loosen 23°")
         clamp1_loosen23_button.clicked.connect(lambda: self.dnx.set_position(DXL5_ID, self.dnx.get_position(DXL5_ID) - 256))
-        clamp1_gohome_button = QPushButton("Go Home")
-        clamp1_gohome_button.clicked.connect(lambda: self.dnx.set_clamp1("home"))
         clamp1_go_box.addWidget(clamp1_tighten45_button)
         clamp1_go_box.addWidget(clamp1_loosen45_button)
         clamp1_go_box.addWidget(clamp1_tightin23_button)
         clamp1_go_box.addWidget(clamp1_loosen23_button)
-        clamp1_go_box.addWidget(clamp1_gohome_button)
     
         clamp1_box.addWidget(clamp1_label)
-        clamp1_box.addLayout(clamp1_homepos_box)
         clamp1_box.addLayout(clamp1_restpos_box)
         clamp1_box.addLayout(clamp1_lightpos_box)
         clamp1_box.addLayout(clamp1_mediumpos_box)
         clamp1_box.addLayout(clamp1_heavypos_box)
         clamp1_box.addLayout(clamp1_savepos_box)
+        clamp1_box.addLayout(clamp1_homepos_box)
         clamp1_box.addLayout(clamp1_go_box)
         
         clamp2_box = QVBoxLayout()
         clamp2_label = QLabel("Clamp 2")
         clamp2_label.setFixedWidth(80)
         clamp2_label.setStyleSheet("font-size: 10pt")
-        
-        clamp2_homepos_box = QHBoxLayout()
-        clamp2_homepos_button = QPushButton("Perform Homing Routine")
-        clamp2_homepos_button.clicked.connect(lambda: self.dnx.home_clamp2())
-        clamp2_homepos_box.addWidget(clamp2_homepos_button)
         
         clamp2_restpos_box = QHBoxLayout()
         clamp2_restpos_label = QLabel("Rest Position")
@@ -315,6 +310,14 @@ class MainWindow(QWidget):
         clamp2_savepos_button.clicked.connect(lambda: self.dnx.save_clamp2pos())
         clamp2_savepos_box.addWidget(clamp2_savepos_button)
         
+        clamp2_homepos_box = QHBoxLayout()
+        clamp2_homepos_button = QPushButton("Perform Homing Routine")
+        clamp2_homepos_button.clicked.connect(lambda: self.dnx.home_clamp2())
+        clamp2_gohome_button = QPushButton("Go Home")
+        clamp2_gohome_button.clicked.connect(lambda: self.dnx.set_clamp2("home"))
+        clamp2_homepos_box.addWidget(clamp2_homepos_button)
+        clamp2_homepos_box.addWidget(clamp2_gohome_button)
+        
         clamp2_go_box = QHBoxLayout()
         clamp2_tighten45_button = QPushButton("Tighten 45°")
         clamp2_tighten45_button.clicked.connect(lambda: self.dnx.set_position(DXL6_ID, self.dnx.get_position(DXL6_ID) + 512))
@@ -324,21 +327,18 @@ class MainWindow(QWidget):
         clamp2_tightin23_button.clicked.connect(lambda: self.dnx.set_position(DXL6_ID, self.dnx.get_position(DXL6_ID) + 256))
         clamp2_loosen23_button = QPushButton("Loosen 23°")
         clamp2_loosen23_button.clicked.connect(lambda: self.dnx.set_position(DXL6_ID, self.dnx.get_position(DXL6_ID) - 256))
-        clamp2_gohome_button = QPushButton("Go Home")
-        clamp2_gohome_button.clicked.connect(lambda: self.dnx.set_clamp2("home"))
         clamp2_go_box.addWidget(clamp2_tighten45_button)
         clamp2_go_box.addWidget(clamp2_loosen45_button)
         clamp2_go_box.addWidget(clamp2_tightin23_button)
         clamp2_go_box.addWidget(clamp2_loosen23_button)
-        clamp2_go_box.addWidget(clamp2_gohome_button)
         
         clamp2_box.addWidget(clamp2_label)
-        clamp2_box.addLayout(clamp2_homepos_box)
         clamp2_box.addLayout(clamp2_restpos_box)
         clamp2_box.addLayout(clamp2_lightpos_box)
         clamp2_box.addLayout(clamp2_mediumpos_box)
         clamp2_box.addLayout(clamp2_heavypos_box)
         clamp2_box.addLayout(clamp2_savepos_box)
+        clamp2_box.addLayout(clamp2_homepos_box)
         clamp2_box.addLayout(clamp2_go_box)
         
         clamp_box.addLayout(clamp1_box)
@@ -352,24 +352,15 @@ class MainWindow(QWidget):
         clamp_config_label.setStyleSheet("font-size: 10pt")
         
         clampconfig_box = QHBoxLayout()
-        moveleft_button = QPushButton("Move Left")
-        moveleft_button.clicked.connect(lambda: self.dnx.set_movingLeft())
-        moveright_button = QPushButton("Move Right")
-        moveright_button.clicked.connect(lambda: self.dnx.set_movingRight())
-        movetop_button = QPushButton("Move Top")
-        movetop_button.clicked.connect(lambda: self.dnx.set_movingTop())
-        movebottom_button = QPushButton("Move Bottom")
-        movebottom_button.clicked.connect(lambda: self.dnx.set_movingBottom())
-        movehalf_button = QPushButton("Move Halves")
+        moveLR_button = QPushButton("Move Left/Right")
+        moveLR_button.clicked.connect(lambda: self.dnx.set_movingLeft())
+        moveTB_button = QPushButton("Move Top/Bottom")
+        moveTB_button.clicked.connect(lambda: self.dnx.set_movingTop())
+        movehalf_button = QPushButton("Move Halves/All")
         movehalf_button.clicked.connect(lambda: self.dnx.set_movingHalf())
-        moveall_button = QPushButton("Move All")
-        moveall_button.clicked.connect(lambda: self.dnx.set_movingAll())
-        clampconfig_box.addWidget(moveleft_button)
-        clampconfig_box.addWidget(moveright_button)
-        clampconfig_box.addWidget(movetop_button)
-        clampconfig_box.addWidget(movebottom_button)
+        clampconfig_box.addWidget(moveLR_button)
+        clampconfig_box.addWidget(moveTB_button)
         clampconfig_box.addWidget(movehalf_button)
-        clampconfig_box.addWidget(moveall_button)
         
         big_clampconfig_box.addWidget(clamp_config_label)
         big_clampconfig_box.addLayout(clampconfig_box)
@@ -617,6 +608,19 @@ class MainWindow(QWidget):
             self.clamp2_keymove = True
             self.motor_vel_values[5].setText(str(CLAMP_KEY_SPEED))
             
+        elif event.key() == Qt.Key_0:
+            self.dnx.set_clamp1("home")
+            self.dnx.set_clamp2("home")
+        elif event.key() == Qt.Key_1:
+            self.dnx.set_movingLeft()
+        elif event.key() == Qt.Key_2:
+            self.dnx.set_movingTop()
+        elif event.key() == Qt.Key_3:
+            self.dnx.set_movingHalf()
+        elif event.key() == Qt.Key_4:
+            self.dnx.set_clamp1("rest")
+            self.dnx.set_clamp2("rest")
+            
         elif event.key() == Qt.Key_Escape:
             QApplication.quit()
 
@@ -644,17 +648,14 @@ class MainWindow(QWidget):
             self.clamp2_keymove = False
 
     def check_homed(self):
-        
         motor5_homed = True
-        if abs(self.dnx.get_position(DXL5_ID)- self.dnx.clamp1_pos0) > 3:
+        if abs(self.dnx.get_position(DXL5_ID)- self.dnx.clamp1_pos0) > 2:
             print("Motor 5 not homed")
             motor5_homed = False
-        
         motor6_homed = True
-        if abs(self.dnx.get_position(DXL6_ID)- self.dnx.clamp2_pos0) > 3:
+        if abs(self.dnx.get_position(DXL6_ID)- self.dnx.clamp2_pos0) > 2:
             print("Motor 6 not homed")
             motor6_homed = False
-            
         return motor5_homed and motor6_homed
 
     def closeEvent(self, event):

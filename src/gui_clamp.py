@@ -112,6 +112,7 @@ class MainWindow(QWidget):
         speed_box.setContentsMargins(0, 15, 0, 0)
 
         ## Clamping Controls ##
+        
         clamp_box = QHBoxLayout()
                 
         clamp1_box = QVBoxLayout()
@@ -123,6 +124,24 @@ class MainWindow(QWidget):
         clamp1_homepos_button = QPushButton("Perform Homing Routine")
         clamp1_homepos_button.clicked.connect(lambda: self.dnx.home_clamp1())
         clamp1_homepos_box.addWidget(clamp1_homepos_button)
+        
+        clamp1_restpos_box = QHBoxLayout()
+        clamp1_restpos_label = QLabel("Rest Position")
+        clamp1_restpos_label.setFixedWidth(100)
+        self.clamp1_restpos_value = QLineEdit(str(self.dnx.clamp1_pos["rest"]))
+        self.clamp1_restpos_value.setReadOnly(True)
+        self.clamp1_absrestpos_value = QLineEdit(str(self.dnx.clamp1_pos["rest"] + self.dnx.clamp1_pos0))
+        self.clamp1_absrestpos_value.setFixedWidth(60)
+        self.clamp1_absrestpos_value.setReadOnly(True)
+        clamp1_restpos_setbutton = QPushButton("Set")
+        clamp1_restpos_setbutton.clicked.connect(lambda: self.dnx.define_restclamp1())
+        clamp1_restpos_goto_button = QPushButton("Go To")
+        clamp1_restpos_goto_button.clicked.connect(lambda: self.dnx.set_clamp1("rest"))
+        clamp1_restpos_box.addWidget(clamp1_restpos_label)
+        clamp1_restpos_box.addWidget(self.clamp1_restpos_value)
+        clamp1_restpos_box.addWidget(self.clamp1_absrestpos_value)
+        clamp1_restpos_box.addWidget(clamp1_restpos_setbutton)
+        clamp1_restpos_box.addWidget(clamp1_restpos_goto_button)        
         
         clamp1_lightpos_box = QHBoxLayout()
         clamp1_lightpos_label = QLabel("Light Position")
@@ -202,6 +221,7 @@ class MainWindow(QWidget):
     
         clamp1_box.addWidget(clamp1_label)
         clamp1_box.addLayout(clamp1_homepos_box)
+        clamp1_box.addLayout(clamp1_restpos_box)
         clamp1_box.addLayout(clamp1_lightpos_box)
         clamp1_box.addLayout(clamp1_mediumpos_box)
         clamp1_box.addLayout(clamp1_heavypos_box)
@@ -217,6 +237,24 @@ class MainWindow(QWidget):
         clamp2_homepos_button = QPushButton("Perform Homing Routine")
         clamp2_homepos_button.clicked.connect(lambda: self.dnx.home_clamp2())
         clamp2_homepos_box.addWidget(clamp2_homepos_button)
+        
+        clamp2_restpos_box = QHBoxLayout()
+        clamp2_restpos_label = QLabel("Rest Position")
+        clamp2_restpos_label.setFixedWidth(100)
+        self.clamp2_restpos_value = QLineEdit(str(self.dnx.clamp2_pos["rest"]))
+        self.clamp2_restpos_value.setReadOnly(True)
+        self.clamp2_absrestpos_value = QLineEdit(str(self.dnx.clamp2_pos["rest"] + self.dnx.clamp2_pos0))
+        self.clamp2_absrestpos_value.setFixedWidth(60)
+        self.clamp2_absrestpos_value.setReadOnly(True)
+        clamp2_restpos_setbutton = QPushButton("Set")
+        clamp2_restpos_setbutton.clicked.connect(lambda: self.dnx.define_restclamp2())
+        clamp2_restpos_goto_button = QPushButton("Go To")
+        clamp2_restpos_goto_button.clicked.connect(lambda: self.dnx.set_clamp2("rest"))
+        clamp2_restpos_box.addWidget(clamp2_restpos_label)
+        clamp2_restpos_box.addWidget(self.clamp2_restpos_value)
+        clamp2_restpos_box.addWidget(self.clamp2_absrestpos_value)
+        clamp2_restpos_box.addWidget(clamp2_restpos_setbutton)
+        clamp2_restpos_box.addWidget(clamp2_restpos_goto_button)
         
         clamp2_lightpos_box = QHBoxLayout()
         clamp2_lightpos_label = QLabel("Light Position")
@@ -296,6 +334,7 @@ class MainWindow(QWidget):
         
         clamp2_box.addWidget(clamp2_label)
         clamp2_box.addLayout(clamp2_homepos_box)
+        clamp2_box.addLayout(clamp2_restpos_box)
         clamp2_box.addLayout(clamp2_lightpos_box)
         clamp2_box.addLayout(clamp2_mediumpos_box)
         clamp2_box.addLayout(clamp2_heavypos_box)
@@ -305,8 +344,39 @@ class MainWindow(QWidget):
         clamp_box.addLayout(clamp1_box)
         clamp_box.addLayout(clamp2_box)
         
+        ## Clamping Configurations ##
+        
+        big_clampconfig_box = QVBoxLayout()
+        big_clampconfig_box.setContentsMargins(0, 15, 0, 0)
+        clamp_config_label = QLabel("Clamp Configurations")
+        clamp_config_label.setStyleSheet("font-size: 10pt")
+        
+        clampconfig_box = QHBoxLayout()
+        moveleft_button = QPushButton("Move Left")
+        moveleft_button.clicked.connect(lambda: self.dnx.set_movingLeft())
+        moveright_button = QPushButton("Move Right")
+        moveright_button.clicked.connect(lambda: self.dnx.set_movingRight())
+        movetop_button = QPushButton("Move Top")
+        movetop_button.clicked.connect(lambda: self.dnx.set_movingTop())
+        movebottom_button = QPushButton("Move Bottom")
+        movebottom_button.clicked.connect(lambda: self.dnx.set_movingBottom())
+        movehalf_button = QPushButton("Move Halves")
+        movehalf_button.clicked.connect(lambda: self.dnx.set_movingHalf())
+        moveall_button = QPushButton("Move All")
+        moveall_button.clicked.connect(lambda: self.dnx.set_movingAll())
+        clampconfig_box.addWidget(moveleft_button)
+        clampconfig_box.addWidget(moveright_button)
+        clampconfig_box.addWidget(movetop_button)
+        clampconfig_box.addWidget(movebottom_button)
+        clampconfig_box.addWidget(movehalf_button)
+        clampconfig_box.addWidget(moveall_button)
+        
+        big_clampconfig_box.addWidget(clamp_config_label)
+        big_clampconfig_box.addLayout(clampconfig_box)
+        
         box.addLayout(speed_box)
         box.addLayout(clamp_box)
+        box.addLayout(big_clampconfig_box)
         self.setLayout(box)
 
         self.timer = QTimer()
@@ -566,14 +636,33 @@ class MainWindow(QWidget):
             self.motor_vel_values[3].setText('0')
         elif event.key() in [Qt.Key_BracketLeft, Qt.Key_BracketRight]:
             self.motor_vel_values[4].setText('0')
-            self.dnx.set_velocity(DXL5_ID, int(self.motor_vel_values[4].text()))
+            self.dnx.set_velocity(DXL5_ID, 0)
             self.clamp1_keymove = False
         elif event.key() in [Qt.Key_Semicolon, Qt.Key_Apostrophe]:
             self.motor_vel_values[5].setText('0')
-            self.dnx.set_velocity(DXL6_ID, int(self.motor_vel_values[5].text()))
+            self.dnx.set_velocity(DXL6_ID, 0)
             self.clamp2_keymove = False
 
+    def check_homed(self):
+        
+        motor5_homed = True
+        if abs(self.dnx.get_position(DXL5_ID)- self.dnx.clamp1_pos0) > 3:
+            print("Motor 5 not homed")
+            motor5_homed = False
+        
+        motor6_homed = True
+        if abs(self.dnx.get_position(DXL6_ID)- self.dnx.clamp2_pos0) > 3:
+            print("Motor 6 not homed")
+            motor6_homed = False
+            
+        return motor5_homed and motor6_homed
+
     def closeEvent(self, event):
+        if not self.check_homed():
+            print("Clamps not homed. Please home clamps before closing the GUI.")
+            QMessageBox.warning(self, 'Warning', 'Clamps not homed.\nPlease home clamps before closing the GUI.')
+            event.ignore()
+            return
         if self.have_gamepad():
             self.gamepad_thread.terminate()
         self.dnx.disable_torque(DXL1_ID)

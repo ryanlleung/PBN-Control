@@ -328,6 +328,12 @@ class Dynamixel:
     def define_maxclamp2(self):
         self.clamp2_pos["max"] = self.get_position(DXL6_ID)
         
+    def define_restclamp1(self):
+        self.clamp1_pos["rest"] = self.get_position(DXL5_ID) - self.clamp1_pos0
+        
+    def define_restclamp2(self):
+        self.clamp2_pos["rest"] = self.get_position(DXL6_ID) - self.clamp2_pos0
+        
     def define_lightclamp1(self):     
         self.clamp1_pos["light"] = self.get_position(DXL5_ID) - self.clamp1_pos0
         
@@ -356,20 +362,26 @@ class Dynamixel:
         self.set_position(DXL5_ID, self.clamp1_pos0 + pos1, mode)
         self.set_position(DXL6_ID, self.clamp2_pos0 + pos2, mode)
         
-    def set_clamp1(self, desc, mode="extpos"):
+    def set_clamp1(self, desc, vel=1000, mode="extpos"):
         if desc not in self.clamp1_pos:
             raise ValueError("Invalid description")
         self.set_mode(DXL5_ID, mode)
-        self.set_profile_velocity(DXL5_ID, 100)
+        if desc in ["home", "rest"]:
+            self.set_profile_velocity(DXL5_ID, 1000)
+        else:
+            self.set_profile_velocity(DXL5_ID, vel)
         pos = self.clamp1_pos[desc]
         print(f"Setting clamp1 to {desc} at {self.clamp1_pos0 + pos}")
         self.set_position(DXL5_ID, self.clamp1_pos0 + pos, mode)
         
-    def set_clamp2(self, desc, mode="extpos"):
+    def set_clamp2(self, desc, vel=1500, mode="extpos"):
         if desc not in self.clamp2_pos:
             raise ValueError("Invalid description")
         self.set_mode(DXL6_ID, mode)
-        self.set_profile_velocity(DXL6_ID, 100)
+        if desc in ["home", "rest"]:
+            self.set_profile_velocity(DXL6_ID, 1500)
+        else:
+            self.set_profile_velocity(DXL6_ID, vel)
         pos = self.clamp2_pos[desc]
         print(f"Setting clamp2 to {desc} at {self.clamp2_pos0 + pos}")
         self.set_position(DXL6_ID, self.clamp2_pos0 + pos, mode)
@@ -377,10 +389,12 @@ class Dynamixel:
     def save_clamp1pos(self):
         with open('src/motor_ctrl/clamp1_pos.json', 'w') as config_file:
             json.dump(self.clamp1_pos, config_file, indent=2)
+            print("Clamp1 positions saved")
             
     def save_clamp2pos(self):
         with open('src/motor_ctrl/clamp2_pos.json', 'w') as config_file:
             json.dump(self.clamp2_pos, config_file, indent=2)
+            print("Clamp2 positions saved")
         
     #### Autohome ####
     
@@ -393,6 +407,7 @@ class Dynamixel:
                 break
         self.set_velocity(DXL5_ID, 0)
         self.define_homeclamp1()
+        print(f"Clamp1 homed at {self.clamp1_pos0}")
         
     def home_clamp2(self, current_limit=35):
         while True:
@@ -403,7 +418,33 @@ class Dynamixel:
                 break
         self.set_velocity(DXL6_ID, 0)
         self.define_homeclamp2()
+        print(f"Clamp2 homed at {self.clamp2_pos0}")
+        
+    #### Configurations ####
     
+    def set_movingLeft(self):
+        self.set_clamp1("heavy")
+        self.set_clamp2("light")
+    
+    def set_movingRight(self):
+        self.set_clamp1("heavy")
+        self.set_clamp2("light")
+        
+    def set_movingTop(self):
+        self.set_clamp1("light")
+        self.set_clamp2("heavy")
+        
+    def set_movingBottom(self):
+        self.set_clamp1("light")
+        self.set_clamp2("heavy")
+        
+    def set_movingHalf(self):
+        self.set_clamp1("medium")
+        self.set_clamp2("medium")
+        
+    def set_movingAll(self):
+        self.set_clamp1("medium")
+        self.set_clamp2("medium")
 
 #### Main ####
 

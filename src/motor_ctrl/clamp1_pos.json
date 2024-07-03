@@ -1,7 +1,8 @@
 {
   "home": 0,
   "max": 120000,
-  "light": 42745,
-  "medium": 42745,
-  "heavy": 42745
+  "rest": 25000,
+  "light": 33520,
+  "medium": 38389,
+  "heavy": 43249
 }

@@ -3,7 +3,7 @@ import sys
 import time
 
 from inputs import get_gamepad
-from motor_ctrl.sync_clamp import Dynamixel, DXL1_ID, DXL2_ID, DXL3_ID, DXL4_ID, DXL5_ID, DXL6_ID
+from motor_ctrl.sync_clamp import Dynamixel6, DXL1_ID, DXL2_ID, DXL3_ID, DXL4_ID, DXL5_ID, DXL6_ID
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -59,7 +59,7 @@ class MainWindow(QWidget):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        self.dnx = Dynamixel()
+        self.dnx = Dynamixel6()
         self.dnx.open_port()
         self.dnx.enable_torque(DXL1_ID)
         self.dnx.enable_torque(DXL2_ID)
@@ -353,9 +353,9 @@ class MainWindow(QWidget):
         
         clampconfig_box = QHBoxLayout()
         moveLR_button = QPushButton("Move Left/Right")
-        moveLR_button.clicked.connect(lambda: self.dnx.set_movingLeft())
+        moveLR_button.clicked.connect(lambda: self.dnx.set_movingLR())
         moveTB_button = QPushButton("Move Top/Bottom")
-        moveTB_button.clicked.connect(lambda: self.dnx.set_movingTop())
+        moveTB_button.clicked.connect(lambda: self.dnx.set_movingTB())
         movehalf_button = QPushButton("Move Halves/All")
         movehalf_button.clicked.connect(lambda: self.dnx.set_movingHalf())
         clampconfig_box.addWidget(moveLR_button)
@@ -536,7 +536,9 @@ class MainWindow(QWidget):
             voltage_value.setText(str(self.dnx.get_voltage(motor_id)))
             current_value.setText(str(self.dnx.get_current(motor_id)))
             temp_value.setText(str(self.dnx.get_temperature(motor_id)))
-            
+        
+        self.clamp1_restpos_value.setText(str(self.dnx.clamp1_pos["rest"]))
+        self.clamp1_absrestpos_value.setText(str(self.dnx.clamp1_pos["rest"] + self.dnx.clamp1_pos0))
         self.clamp1_lightpos_value.setText(str(self.dnx.clamp1_pos["light"]))
         self.clamp1_abslightpos_value.setText(str(self.dnx.clamp1_pos["light"] + self.dnx.clamp1_pos0))
         self.clamp1_mediumpos_value.setText(str(self.dnx.clamp1_pos["medium"]))
@@ -544,6 +546,8 @@ class MainWindow(QWidget):
         self.clamp1_heavypos_value.setText(str(self.dnx.clamp1_pos["heavy"]))
         self.clamp1_absheavypos_value.setText(str(self.dnx.clamp1_pos["heavy"] + self.dnx.clamp1_pos0))
 
+        self.clamp2_restpos_value.setText(str(self.dnx.clamp2_pos["rest"]))
+        self.clamp2_absrestpos_value.setText(str(self.dnx.clamp2_pos["rest"] + self.dnx.clamp2_pos0))
         self.clamp2_lightpos_value.setText(str(self.dnx.clamp2_pos["light"]))
         self.clamp2_abslightpos_value.setText(str(self.dnx.clamp2_pos["light"] + self.dnx.clamp2_pos0))
         self.clamp2_mediumpos_value.setText(str(self.dnx.clamp2_pos["medium"]))
@@ -612,9 +616,9 @@ class MainWindow(QWidget):
             self.dnx.set_clamp1("home")
             self.dnx.set_clamp2("home")
         elif event.key() == Qt.Key_1:
-            self.dnx.set_movingLeft()
+            self.dnx.set_movingLR()
         elif event.key() == Qt.Key_2:
-            self.dnx.set_movingTop()
+            self.dnx.set_movingTB()
         elif event.key() == Qt.Key_3:
             self.dnx.set_movingHalf()
         elif event.key() == Qt.Key_4:

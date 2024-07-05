@@ -3,7 +3,7 @@ import sys
 import time
 
 from inputs import get_gamepad
-from motor_ctrl.sync_dual import Dynamixel, DXL1_ID, DXL2_ID
+from motor_ctrl.sync_dual import Dynamixel2, DXL1_ID, DXL2_ID
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -43,7 +43,7 @@ class MainWindow(QWidget):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        self.dnx = Dynamixel()
+        self.dnx = Dynamixel2()
         self.dnx.open_port()
         self.dnx.enable_torque(DXL1_ID)
         self.dnx.enable_torque(DXL2_ID)
@@ -77,7 +77,7 @@ class MainWindow(QWidget):
         
         # Create a QSpinBox
         self.speed_input = QSpinBox()
-        self.speed_input.setValue(17)
+        self.speed_input.setValue(50)
         self.speed_input.setRange(1, 100)
         self.speed_input.setFixedWidth(50)
         
@@ -210,7 +210,7 @@ class MainWindow(QWidget):
         try:
             speed_value = int(self.speed_input.text())
         except ValueError:
-            speed_value = 17  # Default speed value
+            speed_value = 50  # Default speed value
 
         boost_multiplier = 3 if event.modifiers() & Qt.ShiftModifier else 1
         adjusted_speed = int(speed_value * boost_multiplier)

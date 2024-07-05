@@ -49,7 +49,7 @@ LEN = {
 
 PROTOCOL_VERSION = 2.0  # Protocol version used by the Dynamixel
 
-class Dynamixel:
+class Dynamixel6:
     def __init__(self):
         self.port_handler = PortHandler(DEVICENAME)
         self.packet_handler = PacketHandler(PROTOCOL_VERSION)
@@ -246,63 +246,84 @@ class Dynamixel:
             
     #### Higher Level ####
     
-    def set_dualpos(self, pos1, pos2, mode="curpos"):
+    def set_leftpos(self, pos, mode="extpos"):
+        self.set_movingLR()
         self.set_mode(DXL1_ID, mode)
-        self.set_mode(DXL2_ID, mode)
-        self.set_position(DXL1_ID, pos1 + self.motor_pos0[DXL1_ID], mode)
-        self.set_position(DXL2_ID, pos2 + self.motor_pos0[DXL2_ID], mode)
+        self.set_position(DXL1_ID, pos, mode)
     
-    def set_quadpos(self, pos1, pos2, pos3, pos4, mode="curpos"):
-        self.set_mode(DXL1_ID, mode)
-        self.set_mode(DXL2_ID, mode)
-        self.set_mode(DXL3_ID, mode)
-        self.set_mode(DXL4_ID, mode)
-        self.set_position(DXL1_ID, pos1 + self.motor_pos0[DXL1_ID], mode)
-        self.set_position(DXL2_ID, pos2 + self.motor_pos0[DXL2_ID], mode)
-        self.set_position(DXL3_ID, pos3 + self.motor_pos0[DXL3_ID], mode)
-        self.set_position(DXL4_ID, pos4 + self.motor_pos0[DXL4_ID], mode)
+    # def set_dualpos(self, pos1, pos2, mode="extpos"):
+    #     self.set_mode(DXL1_ID, mode)
+    #     self.set_mode(DXL2_ID, mode)
+    #     self.set_position(DXL1_ID, pos1, mode)
+    #     self.set_position(DXL2_ID, pos2, mode)
+    
+    # def set_quadpos(self, pos1, pos2, pos3, pos4, mode="extpos"):
+    #     self.set_mode(DXL1_ID, mode)
+    #     self.set_mode(DXL2_ID, mode)
+    #     self.set_mode(DXL3_ID, mode)
+    #     self.set_mode(DXL4_ID, mode)
+    #     self.set_position(DXL1_ID, pos1, mode)
+    #     self.set_position(DXL2_ID, pos2, mode)
+    #     self.set_position(DXL3_ID, pos3, mode)
+    #     self.set_position(DXL4_ID, pos4, mode)
 
-    def set_dualvel(self, vel1, vel2, dur, brake=True):
-        BUFF = 0.2
-        if dur < BUFF:
-            print(f"Duration must be greater than {BUFF}s")
-            self.stop_motors()
-            return
-        self.set_velocity(DXL1_ID, vel1)
-        self.set_velocity(DXL2_ID, vel2)
-        time.sleep(dur - BUFF)
-        if brake:
-            self.stop_motors()
-        else:
-            self.disable_torque(DXL1_ID)
-            self.disable_torque(DXL2_ID)
-            time.sleep(BUFF)
-            self.enable_torque(DXL1_ID)
-            self.enable_torque(DXL2_ID)
+    # def set_dualrpos(self, rpos1, rpos2, mode="extpos"):
+    #     self.set_mode(DXL1_ID, mode)
+    #     self.set_mode(DXL2_ID, mode)
+    #     self.set_position(DXL1_ID, self.get_position(DXL1_ID)+rpos1, mode)
+    #     self.set_position(DXL2_ID, self.get_position(DXL2_ID)+rpos2, mode)
+        
+    # def set_quadrpos(self, rpos1, rpos2, rpos3, rpos4, mode="extpos"):
+    #     self.set_mode(DXL1_ID, mode)
+    #     self.set_mode(DXL2_ID, mode)
+    #     self.set_mode(DXL3_ID, mode)
+    #     self.set_mode(DXL4_ID, mode)
+    #     self.set_position(DXL1_ID, self.get_position(DXL1_ID)+rpos1, mode)
+    #     self.set_position(DXL2_ID, self.get_position(DXL2_ID)+rpos2, mode)
+    #     self.set_position(DXL3_ID, self.get_position(DXL3_ID)+rpos3, mode)
+    #     self.set_position(DXL4_ID, self.get_position(DXL4_ID)+rpos4, mode)
+        
+    # def set_dualvel(self, vel1, vel2, dur, brake=True):
+    #     BUFF = 0.2
+    #     if dur < BUFF:
+    #         print(f"Duration must be greater than {BUFF}s")
+    #         self.stop_motors()
+    #         return
+    #     self.set_velocity(DXL1_ID, vel1)
+    #     self.set_velocity(DXL2_ID, vel2)
+    #     time.sleep(dur - BUFF)
+    #     if brake:
+    #         self.stop_motors()
+    #     else:
+    #         self.disable_torque(DXL1_ID)
+    #         self.disable_torque(DXL2_ID)
+    #         time.sleep(BUFF)
+    #         self.enable_torque(DXL1_ID)
+    #         self.enable_torque(DXL2_ID)
 
-    def set_quadvel(self, vel1, vel2, vel3, vel4, dur, brake=True):
-        BUFF = 0.2
-        if dur < BUFF:
-            print(f"Duration must be greater than {BUFF}s")
-            self.stop_motors()
-            return
-        self.set_velocity(DXL1_ID, vel1)
-        self.set_velocity(DXL2_ID, vel2)
-        self.set_velocity(DXL3_ID, vel3)
-        self.set_velocity(DXL4_ID, vel4)
-        time.sleep(dur - BUFF)
-        if brake:
-            self.stop_motors()
-        else:
-            self.disable_torque(DXL1_ID)
-            self.disable_torque(DXL2_ID)
-            self.disable_torque(DXL3_ID)
-            self.disable_torque(DXL4_ID)
-            time.sleep(BUFF)
-            self.enable_torque(DXL1_ID)
-            self.enable_torque(DXL2_ID)
-            self.enable_torque(DXL3_ID)
-            self.enable_torque(DXL4_ID)
+    # def set_quadvel(self, vel1, vel2, vel3, vel4, dur, brake=True):
+    #     BUFF = 0.2
+    #     if dur < BUFF:
+    #         print(f"Duration must be greater than {BUFF}s")
+    #         self.stop_motors()
+    #         return
+    #     self.set_velocity(DXL1_ID, vel1)
+    #     self.set_velocity(DXL2_ID, vel2)
+    #     self.set_velocity(DXL3_ID, vel3)
+    #     self.set_velocity(DXL4_ID, vel4)
+    #     time.sleep(dur - BUFF)
+    #     if brake:
+    #         self.stop_motors()
+    #     else:
+    #         self.disable_torque(DXL1_ID)
+    #         self.disable_torque(DXL2_ID)
+    #         self.disable_torque(DXL3_ID)
+    #         self.disable_torque(DXL4_ID)
+    #         time.sleep(BUFF)
+    #         self.enable_torque(DXL1_ID)
+    #         self.enable_torque(DXL2_ID)
+    #         self.enable_torque(DXL3_ID)
+    #         self.enable_torque(DXL4_ID)
     
     def stop_motors(self):
         self.set_velocity(DXL1_ID, 0)
@@ -362,12 +383,12 @@ class Dynamixel:
         self.set_position(DXL5_ID, self.clamp1_pos0 + pos1, mode)
         self.set_position(DXL6_ID, self.clamp2_pos0 + pos2, mode)
         
-    def set_clamp1(self, desc, vel=1000, mode="extpos"):
+    def set_clamp1(self, desc, vel=1500, mode="extpos"):
         if desc not in self.clamp1_pos:
             raise ValueError("Invalid description")
         self.set_mode(DXL5_ID, mode)
         if desc in ["home", "rest"]:
-            self.set_profile_velocity(DXL5_ID, 1000)
+            self.set_profile_velocity(DXL5_ID, 2000)
         else:
             self.set_profile_velocity(DXL5_ID, vel)
         pos = self.clamp1_pos[desc]
@@ -379,7 +400,7 @@ class Dynamixel:
             raise ValueError("Invalid description")
         self.set_mode(DXL6_ID, mode)
         if desc in ["home", "rest"]:
-            self.set_profile_velocity(DXL6_ID, 1500)
+            self.set_profile_velocity(DXL6_ID, 2000)
         else:
             self.set_profile_velocity(DXL6_ID, vel)
         pos = self.clamp2_pos[desc]
@@ -422,19 +443,11 @@ class Dynamixel:
         
     #### Configurations ####
     
-    def set_movingLeft(self):
+    def set_movingLR(self):
         self.set_clamp1("heavy")
         self.set_clamp2("light")
-    
-    def set_movingRight(self):
-        self.set_clamp1("heavy")
-        self.set_clamp2("light")
-        
-    def set_movingTop(self):
-        self.set_clamp1("light")
-        self.set_clamp2("heavy")
-        
-    def set_movingBottom(self):
+
+    def set_movingTB(self):
         self.set_clamp1("light")
         self.set_clamp2("heavy")
         
@@ -449,7 +462,7 @@ class Dynamixel:
 #### Main ####
 
 if __name__ == "__main__":
-    dnx = Dynamixel()
+    dnx = Dynamixel6()
     try:
         dnx.open_port()
         dnx.enable_torque(DXL1_ID)

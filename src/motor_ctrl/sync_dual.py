@@ -1,6 +1,7 @@
 
 import json
 import time
+import threading
 from dynamixel_sdk import *  # Uses Dynamixel SDK library
 
 # Load configuration from JSON file
@@ -23,6 +24,7 @@ ADDR = {
     "PROFILE_ACCELERATION": 108,
     "PROFILE_VELOCITY": 112,
     "GOAL_POSITION": 116,
+    "MOVING_STATUS": 123,
     "PRESENT_CURRENT": 126,
     "PRESENT_VELOCITY": 128,
     "PRESENT_POSITION": 132,
@@ -36,6 +38,7 @@ LEN = {
     "PROFILE_ACCELERATION": 4,
     "PROFILE_VELOCITY": 4,
     "GOAL_POSITION": 4,
+    "MOVING_STATUS": 1,
     "PRESENT_CURRENT": 2,
     "PRESENT_VELOCITY": 4,
     "PRESENT_POSITION": 4,
@@ -45,7 +48,8 @@ LEN = {
 
 PROTOCOL_VERSION = 2.0  # Protocol version used by the Dynamixel
 
-class Dynamixel:
+class Dynamixel2:
+    
     def __init__(self):
         self.port_handler = PortHandler(DEVICENAME)
         self.packet_handler = PacketHandler(PROTOCOL_VERSION)
@@ -53,6 +57,11 @@ class Dynamixel:
         self.motor1_pos0 = 0
         self.motor2_pos0 = 0
         self.motor_modes = {DXL1_ID: None, DXL2_ID: None}
+        self.lock = threading.Lock()
+        self.motor1_thread = threading.Thread()
+        self.motor2_thread = threading.Thread()
+        self.motor1_arrived_event = threading.Event()
+        self.motor2_arrived_event = threading.Event()
         
     def init_sync_handlers(self):
         self.sync_read_position = GroupSyncRead(self.port_handler, self.packet_handler, ADDR["PRESENT_POSITION"], LEN["PRESENT_POSITION"])
@@ -65,20 +74,24 @@ class Dynamixel:
         self.sync_read_current_limit = GroupSyncRead(self.port_handler, self.packet_handler, ADDR["CURRENT_LIMIT"], LEN["CURRENT_LIMIT"])
         self.sync_read_profile_acceleration = GroupSyncRead(self.port_handler, self.packet_handler, ADDR["PROFILE_ACCELERATION"], LEN["PROFILE_ACCELERATION"])
         self.sync_read_profile_velocity = GroupSyncRead(self.port_handler, self.packet_handler, ADDR["PROFILE_VELOCITY"], LEN["PROFILE_VELOCITY"])
+        self.sync_read_moving = GroupSyncRead(self.port_handler, self.packet_handler, ADDR["MOVING_STATUS"], LEN["MOVING_STATUS"])
         
     def open_port(self):
-        if not self.port_handler.openPort():
-            raise IOError("Failed to open port")
-        if not self.port_handler.setBaudRate(BAUDRATE):
-            raise IOError("Failed to set baudrate")
-        print("Port opened and baudrate set")
+        with self.lock:
+            if not self.port_handler.openPort():
+                raise IOError("Failed to open port")
+            if not self.port_handler.setBaudRate(BAUDRATE):
+                raise IOError("Failed to set baudrate")
+            print("Port opened and baudrate set")
 
     def close_port(self):
-        self.port_handler.closePort()
-        print("Attempting to close port")
+        with self.lock:
+            self.port_handler.closePort()
+            print("Attempting to close port")
 
     def reboot(self, motor_id):
-        comm_result, error = self.packet_handler.reboot(self.port_handler, motor_id)
+        with self.lock:
+            comm_result, error = self.packet_handler.reboot(self.port_handler, motor_id)
         self.check_comm_status(comm_result, error, f"Rebooting motor ID {motor_id}")
         time.sleep(0.5)
         print(f"ID {motor_id} rebooted")
@@ -90,7 +103,8 @@ class Dynamixel:
             print(f"{action} error: {self.packet_handler.getRxPacketError(error)}")
 
     def _write_register(self, motor_id, address, value):
-        comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, motor_id, address, value)
+        with self.lock:
+            comm_result, error = self.packet_handler.write1ByteTxRx(self.port_handler, motor_id, address, value)
         self.check_comm_status(comm_result, error, f"Writing to register {address} for ID {motor_id}")
 
     #### Torque & Modes ####
@@ -159,10 +173,11 @@ class Dynamixel:
     #### Information ####
 
     def read_sync_data(self, sync_read, motor_id, address, length):
-        sync_read.clearParam()
-        if not sync_read.addParam(motor_id):
-            raise RuntimeError(f"GroupSyncRead addparam failed for ID {motor_id}")
-        comm_result = sync_read.txRxPacket()
+        with self.lock:
+            sync_read.clearParam()
+            if not sync_read.addParam(motor_id):
+                raise RuntimeError(f"GroupSyncRead addparam failed for ID {motor_id}")
+            comm_result = sync_read.txRxPacket()
         self.check_comm_status(comm_result, 0, f"Reading data from address {address} for ID {motor_id}")
         if not sync_read.isAvailable(motor_id, address, length):
             raise RuntimeError(f"GroupSyncRead getdata failed for ID {motor_id}")
@@ -181,6 +196,44 @@ class Dynamixel:
     
     def get_temperature(self, motor_id):
         return self.read_sync_data(self.sync_read_temperature, motor_id, ADDR["PRESENT_TEMPERATURE"], LEN["PRESENT_TEMPERATURE"])
+    
+    #### Moving Monitoring ####
+    
+    def get_movingstatus(self, motor_id):
+        return self.read_sync_data(self.sync_read_moving, motor_id, ADDR["MOVING_STATUS"], LEN["MOVING_STATUS"])
+    
+    def has_arrived(self, motor_id):
+        return self.get_movingstatus(motor_id) & 0b01
+    
+    def monitor_motor1(self):
+        while not self.motor1_arrived_event.is_set():
+            time.sleep(0.1)
+            self.motor1_arrived = self.has_arrived(DXL1_ID)
+            print(self.motor1_arrived)
+            if self.motor1_arrived:
+                self.motor1_arrived_event.set()
+                print("Motor 1 has arrived")
+    
+    def monitor_motor2(self):
+        while not self.motor2_arrived_event.is_set():
+            time.sleep(0.1)
+            self.motor2_arrived = self.has_arrived(DXL2_ID)
+            print(self.motor2_arrived)
+            if self.motor2_arrived:
+                self.motor2_arrived_event.set()
+                print("Motor 2 has arrived")
+                
+    def wait_motor1_arrived(self):
+        self.motor1_arrived_event.clear()
+        self.motor1_thread = threading.Thread(target=self.monitor_motor1)
+        self.motor1_thread.start()
+        self.motor1_thread.join()
+        
+    def wait_motor2_arrived(self):
+        self.motor2_arrived_event.clear()
+        self.motor2_thread = threading.Thread(target=self.monitor_motor2)
+        self.motor2_thread.start()
+        self.motor2_thread.join()
     
     #### Profile ####
     
@@ -227,6 +280,15 @@ class Dynamixel:
         elif motor_id == DXL2_ID:
             self.motor2_pos0 = self.get_position(motor_id)
         print(f"ID {motor_id} homed")
+        
+    def goto_position(self, motor_id, position, mode="extpos"):
+        self.set_position(motor_id, position, mode)
+        if motor_id == DXL1_ID:
+            self.wait_motor1_arrived()
+        elif motor_id == DXL2_ID:
+            self.wait_motor2_arrived()
+        else:
+            raise ValueError("Invalid motor ID")
 
     #### Velocity ####
 
@@ -252,6 +314,37 @@ class Dynamixel:
         self.set_mode(DXL2_ID, mode)
         self.set_position(DXL1_ID, self.get_position(DXL1_ID)+rpos1, mode)
         self.set_position(DXL2_ID, self.get_position(DXL2_ID)+rpos2, mode)
+        
+    # Go to the absolute position of both motors
+    def goto_dualpos(self, pos1, pos2, mode="extpos"):
+        self.set_mode(DXL1_ID, mode)
+        self.set_mode(DXL2_ID, mode)
+
+        position1_byte = [DXL_LOBYTE(DXL_LOWORD(pos1)), DXL_HIBYTE(DXL_LOWORD(pos1)), DXL_LOBYTE(DXL_HIWORD(pos1)), DXL_HIBYTE(DXL_HIWORD(pos1))]
+        position2_byte = [DXL_LOBYTE(DXL_LOWORD(pos2)), DXL_HIBYTE(DXL_LOWORD(pos2)), DXL_LOBYTE(DXL_HIWORD(pos2)), DXL_HIBYTE(DXL_HIWORD(pos2))]
+
+        self.sync_write_position.clearParam()
+        if not self.sync_write_position.addParam(DXL1_ID, position1_byte):
+            raise RuntimeError(f"GroupSyncWrite addparam failed for ID {DXL1_ID}")
+        if not self.sync_write_position.addParam(DXL2_ID, position2_byte):
+            raise RuntimeError(f"GroupSyncWrite addparam failed for ID {DXL2_ID}")
+
+        with self.lock:
+            comm_result = self.sync_write_position.txPacket()
+        self.check_comm_status(comm_result, 0, "Writing dual positions")
+
+        # Start monitoring threads for both motors
+        self.motor1_arrived_event.clear()
+        self.motor2_arrived_event.clear()
+
+        self.motor1_thread = threading.Thread(target=self.monitor_motor1)
+        self.motor2_thread = threading.Thread(target=self.monitor_motor2)
+        
+        self.motor1_thread.start()
+        self.motor2_thread.start()
+
+        self.motor1_thread.join()
+        self.motor2_thread.join()
     
     # Sets the velocity of both motors and stops after a duration
     def set_dualvel(self, vel1, vel2, dur, brake=True):
@@ -279,17 +372,39 @@ class Dynamixel:
 #### Main ####
 
 if __name__ == "__main__":
-    dnx = Dynamixel()
+    
+    dnx = Dynamixel2()
     try:
         dnx.open_port()
         dnx.enable_torque(DXL1_ID)
         dnx.enable_torque(DXL2_ID)
         
-        dnx.set_velocity(DXL2_ID, 20)
-        time.sleep(2)
-        dnx.set_velocity(DXL2_ID, 0)
+        dnx.home_position(DXL1_ID)
+        dnx.home_position(DXL2_ID)
+        dnx.set_profile_velocity(DXL1_ID, 200)
+        dnx.set_profile_velocity(DXL2_ID, 200)
         
+        # m2p0 = dnx.motor2_pos0
+        # print(f"Motor 2 initial position: {m2p0}")
+        # dnx.goto_position(DXL2_ID, m2p0 + 10000)
+        # print(f"Motor 2 final position: {dnx.get_position(DXL2_ID)}")
+        
+        m1p0 = dnx.motor1_pos0
+        m2p0 = dnx.motor2_pos0
+        print(f"Motor 1 initial position: {m1p0}")
+        print(f"Motor 2 initial position: {m2p0}")
+        dnx.goto_dualpos(m1p0 + 5000, m2p0 + 10000)
+        print(f"Motor 1 final position: {dnx.get_position(DXL1_ID)}")
+        print(f"Motor 2 final position: {dnx.get_position(DXL2_ID)}")
+        dnx.goto_dualpos(m1p0, m2p0)
+        print(f"Motor 1 final position: {dnx.get_position(DXL1_ID)}")
+        print(f"Motor 2 final position: {dnx.get_position(DXL2_ID)}")
+
     finally:
         dnx.disable_torque(DXL1_ID)
         dnx.disable_torque(DXL2_ID)
+        if dnx.motor1_thread.is_alive():
+            dnx.motor1_thread.join()
+        if dnx.motor2_thread.is_alive():
+            dnx.motor2_thread.join()
         dnx.close_port()

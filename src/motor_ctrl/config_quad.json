@@ -1,0 +1,8 @@
+{
+  "MOTOR1_ID": 1,
+  "MOTOR2_ID": 2,
+  "MOTOR3_ID": 3,
+  "MOTOR4_ID": 4,
+  "BAUDRATE": 57600,
+  "DEVICENAME": "COM3"
+}

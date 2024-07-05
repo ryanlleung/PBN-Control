@@ -199,17 +199,16 @@ class Dynamixel2:
     
     #### Moving Monitoring ####
     
-    def get_movingstatus(self, motor_id):
+    def get_moving_status(self, motor_id):
         return self.read_sync_data(self.sync_read_moving, motor_id, ADDR["MOVING_STATUS"], LEN["MOVING_STATUS"])
     
     def has_arrived(self, motor_id):
-        return self.get_movingstatus(motor_id) & 0b01
+        return self.get_moving_status(motor_id) & 0b01
     
     def monitor_motor1(self):
         while not self.motor1_arrived_event.is_set():
             time.sleep(0.1)
             self.motor1_arrived = self.has_arrived(DXL1_ID)
-            print(self.motor1_arrived)
             if self.motor1_arrived:
                 self.motor1_arrived_event.set()
                 print("Motor 1 has arrived")
@@ -218,7 +217,6 @@ class Dynamixel2:
         while not self.motor2_arrived_event.is_set():
             time.sleep(0.1)
             self.motor2_arrived = self.has_arrived(DXL2_ID)
-            print(self.motor2_arrived)
             if self.motor2_arrived:
                 self.motor2_arrived_event.set()
                 print("Motor 2 has arrived")
@@ -314,7 +312,7 @@ class Dynamixel2:
         self.set_mode(DXL2_ID, mode)
         self.set_position(DXL1_ID, self.get_position(DXL1_ID)+rpos1, mode)
         self.set_position(DXL2_ID, self.get_position(DXL2_ID)+rpos2, mode)
-        
+    
     # Go to the absolute position of both motors
     def goto_dualpos(self, pos1, pos2, mode="extpos"):
         self.set_mode(DXL1_ID, mode)
@@ -342,7 +340,6 @@ class Dynamixel2:
         
         self.motor1_thread.start()
         self.motor2_thread.start()
-
         self.motor1_thread.join()
         self.motor2_thread.join()
     
@@ -383,11 +380,6 @@ if __name__ == "__main__":
         dnx.home_position(DXL2_ID)
         dnx.set_profile_velocity(DXL1_ID, 200)
         dnx.set_profile_velocity(DXL2_ID, 200)
-        
-        # m2p0 = dnx.motor2_pos0
-        # print(f"Motor 2 initial position: {m2p0}")
-        # dnx.goto_position(DXL2_ID, m2p0 + 10000)
-        # print(f"Motor 2 final position: {dnx.get_position(DXL2_ID)}")
         
         m1p0 = dnx.motor1_pos0
         m2p0 = dnx.motor2_pos0

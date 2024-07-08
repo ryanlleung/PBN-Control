@@ -263,10 +263,11 @@ class Dynamixel4:
         return self._read_sync_data(self.sync_read_position, motor_id, ADDR["PRESENT_POSITION"], LEN["PRESENT_POSITION"])
     
     # Sets the position of the motor, but does not wait for the motor to reach the position
-    def set_position(self, motor_id, position, mode="extpos"):
+    def set_position(self, motor_id, position, vel, mode="extpos"):
         if mode not in ["extpos", "curpos"]:
             raise ValueError("Invalid mode")
         self.set_mode(motor_id, mode)
+        self.set_profile_velocity(motor_id, vel)
         self._write_position(motor_id, position)
     
     # Defines the current position as the new position 0
@@ -280,17 +281,17 @@ class Dynamixel4:
             self.def_position0(motor_id)
     
     # Moves the motor to the specified position and waits for it to reach the position
-    def goto_position(self, motor_id, position, mode="extpos"):
-        self.set_position(motor_id, position, mode)
+    def goto_position(self, motor_id, position, vel, mode="extpos"):
+        self.set_position(motor_id, position, vel, mode)
         self.motor_arrived_events[motor_id].clear()
         self.motor_threads[motor_id] = threading.Thread(target=self._wait_for_motor, args=(motor_id,))
         self.motor_threads[motor_id].start()
         self.motor_threads[motor_id].join()
     
     # Moves the motors to the specified positions and waits for all motors to reach their positions
-    def goto_quadpos(self, pos1, pos2, pos3, pos4, mode="extpos"):
+    def goto_quadpos(self, pos1, pos2, pos3, pos4, vel, mode="extpos"):
         for motor_id, pos in zip(MOTOR_IDS.values(), [pos1, pos2, pos3, pos4]):
-            self.set_position(motor_id, pos, mode)
+            self.set_position(motor_id, pos, vel, mode)
         for motor_id in MOTOR_IDS.values():
             self.motor_arrived_events[motor_id].clear()
             self.motor_threads[motor_id] = threading.Thread(target=self._wait_for_motor, args=(motor_id,))
@@ -394,7 +395,7 @@ if __name__ == "__main__":
         m3p0 = dnx.motor_pos0[MOTOR3_ID]
         m4p0 = dnx.motor_pos0[MOTOR4_ID]
         print(f"Initial positions: {m1p0}, {m2p0}, {m3p0}, {m4p0}")
-        dnx.goto_quadpos(m1p0 + 5000, m2p0 + 15000, m3p0 + 10000, m4p0 + 20000)
+        dnx.goto_quadpos(m1p0 + 5000, m2p0 + 15000, m3p0 + 10000, m4p0 + 20000, vel=500)
         print(f"Final positions: {dnx.get_position(MOTOR1_ID)}, {dnx.get_position(MOTOR2_ID)}, {dnx.get_position(MOTOR3_ID)}, {dnx.get_position(MOTOR4_ID)}")
         
     finally:

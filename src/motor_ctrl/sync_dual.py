@@ -266,14 +266,14 @@ class Dynamixel2:
         self._write_position(motor_id, position)
     
     # Defines the current position as the new position 0
-    def def_position0(self, motor_id):
+    def define_position0(self, motor_id):
         self.motor_pos0[motor_id] = self.get_position(motor_id)
         print(f"ID {motor_id} pos0 set to {self.motor_pos0[motor_id]}")
     
     # Defines the current positions as the new positions 0
-    def def_dualpos0(self):
+    def define_dualpos0(self):
         for motor_id in MOTOR_IDS.values():
-            self.def_position0(motor_id)
+            self.define_position0(motor_id)
     
     # Moves the motor to the specified position and waits for it to reach the position
     def goto_position(self, motor_id, position, mode="extpos"):
@@ -355,7 +355,7 @@ if __name__ == "__main__":
         dnx.open_port()
         dnx.enable_torque(MOTOR1_ID)
         dnx.enable_torque(MOTOR2_ID)
-        dnx.def_dualpos0()
+        dnx.define_dualpos0()
         
         # response = input("Press 1, 2, 3, or 4 to move the corresponding motor: ")
         # if response == "1":

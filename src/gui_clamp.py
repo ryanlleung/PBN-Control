@@ -3,7 +3,7 @@ import sys
 import time
 
 from inputs import get_gamepad
-from motor_ctrl.sync_clamp import Dynamixel6, DXL1_ID, DXL2_ID, DXL3_ID, DXL4_ID, DXL5_ID, DXL6_ID
+from motor_ctrl.sync_clamp import Dynamixel6, MOTOR1_ID, MOTOR2_ID, MOTOR3_ID, MOTOR4_ID, MOTOR5_ID, MOTOR6_ID
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -61,12 +61,12 @@ class MainWindow(QWidget):
         super(MainWindow, self).__init__()
         self.dnx = Dynamixel6()
         self.dnx.open_port()
-        self.dnx.enable_torque(DXL1_ID)
-        self.dnx.enable_torque(DXL2_ID)
-        self.dnx.enable_torque(DXL3_ID)
-        self.dnx.enable_torque(DXL4_ID)
-        self.dnx.enable_torque(DXL5_ID)
-        self.dnx.enable_torque(DXL6_ID)
+        self.dnx.enable_torque(MOTOR1_ID)
+        self.dnx.enable_torque(MOTOR2_ID)
+        self.dnx.enable_torque(MOTOR3_ID)
+        self.dnx.enable_torque(MOTOR4_ID)
+        self.dnx.enable_torque(MOTOR5_ID)
+        self.dnx.enable_torque(MOTOR6_ID)
         self.dnx.define_homeclamp()
 
         self.motor_switches = [QCheckBox() for _ in range(6)]
@@ -84,12 +84,12 @@ class MainWindow(QWidget):
         motor_box = QHBoxLayout()
 
         self.motor_layouts = [
-            self.create_motor_layout("Motor 1", DXL1_ID, self.motor_switches[0], self.motor_vel_values[0]),
-            self.create_motor_layout("Motor 2", DXL2_ID, self.motor_switches[1], self.motor_vel_values[1]),
-            self.create_motor_layout("Motor 3", DXL3_ID, self.motor_switches[2], self.motor_vel_values[2]),
-            self.create_motor_layout("Motor 4", DXL4_ID, self.motor_switches[3], self.motor_vel_values[3]),
-            self.create_motor_layout("Motor 5", DXL5_ID, self.motor_switches[4], self.motor_vel_values[4]),
-            self.create_motor_layout("Motor 6", DXL6_ID, self.motor_switches[5], self.motor_vel_values[5])
+            self.create_motor_layout("Motor 1", MOTOR1_ID, self.motor_switches[0], self.motor_vel_values[0]),
+            self.create_motor_layout("Motor 2", MOTOR2_ID, self.motor_switches[1], self.motor_vel_values[1]),
+            self.create_motor_layout("Motor 3", MOTOR3_ID, self.motor_switches[2], self.motor_vel_values[2]),
+            self.create_motor_layout("Motor 4", MOTOR4_ID, self.motor_switches[3], self.motor_vel_values[3]),
+            self.create_motor_layout("Motor 5", MOTOR5_ID, self.motor_switches[4], self.motor_vel_values[4]),
+            self.create_motor_layout("Motor 6", MOTOR6_ID, self.motor_switches[5], self.motor_vel_values[5])
         ]
 
         for layout in self.motor_layouts:
@@ -131,7 +131,7 @@ class MainWindow(QWidget):
         clamp1_restpos_setbutton = QPushButton("Set")
         clamp1_restpos_setbutton.clicked.connect(lambda: self.dnx.define_restclamp1())
         clamp1_restpos_goto_button = QPushButton("Go To")
-        clamp1_restpos_goto_button.clicked.connect(lambda: self.dnx.set_clamp1("rest"))
+        clamp1_restpos_goto_button.clicked.connect(lambda: self.dnx.goto_clamp1("rest"))
         clamp1_restpos_box.addWidget(clamp1_restpos_label)
         clamp1_restpos_box.addWidget(self.clamp1_restpos_value)
         clamp1_restpos_box.addWidget(self.clamp1_absrestpos_value)
@@ -149,7 +149,7 @@ class MainWindow(QWidget):
         clamp1_lightpos_setbutton = QPushButton("Set")
         clamp1_lightpos_setbutton.clicked.connect(lambda: self.dnx.define_lightclamp1())
         clamp1_lightpos_goto_button = QPushButton("Go To")
-        clamp1_lightpos_goto_button.clicked.connect(lambda: self.dnx.set_clamp1("light"))
+        clamp1_lightpos_goto_button.clicked.connect(lambda: self.dnx.goto_clamp1("light"))
         clamp1_lightpos_box.addWidget(clamp1_lightpos_label)
         clamp1_lightpos_box.addWidget(self.clamp1_lightpos_value)
         clamp1_lightpos_box.addWidget(self.clamp1_abslightpos_value)
@@ -167,7 +167,7 @@ class MainWindow(QWidget):
         clamp1_mediumpos_setbutton = QPushButton("Set")
         clamp1_mediumpos_setbutton.clicked.connect(lambda: self.dnx.define_mediumclamp1())
         clamp1_mediumpos_goto_button = QPushButton("Go To")
-        clamp1_mediumpos_goto_button.clicked.connect(lambda: self.dnx.set_clamp1("medium"))
+        clamp1_mediumpos_goto_button.clicked.connect(lambda: self.dnx.goto_clamp1("medium"))
         clamp1_mediumpos_box.addWidget(clamp1_mediumpos_label)
         clamp1_mediumpos_box.addWidget(self.clamp1_mediumpos_value)
         clamp1_mediumpos_box.addWidget(self.clamp1_absmediumpos_value)
@@ -185,7 +185,7 @@ class MainWindow(QWidget):
         clamp1_heavypos_setbutton = QPushButton("Set")
         clamp1_heavypos_setbutton.clicked.connect(lambda: self.dnx.define_heavyclamp1())
         clamp1_heavypos_goto_button = QPushButton("Go To")
-        clamp1_heavypos_goto_button.clicked.connect(lambda: self.dnx.set_clamp1("heavy"))
+        clamp1_heavypos_goto_button.clicked.connect(lambda: self.dnx.goto_clamp1("heavy"))
         clamp1_heavypos_box.addWidget(clamp1_heavypos_label)
         clamp1_heavypos_box.addWidget(self.clamp1_heavypos_value)
         clamp1_heavypos_box.addWidget(self.clamp1_absheavypos_value)
@@ -201,19 +201,19 @@ class MainWindow(QWidget):
         clamp1_homepos_button = QPushButton("Perform Homing Routine")
         clamp1_homepos_button.clicked.connect(lambda: self.dnx.home_clamp1())
         clamp1_gohome_button = QPushButton("Go Home")
-        clamp1_gohome_button.clicked.connect(lambda: self.dnx.set_clamp1("home"))
+        clamp1_gohome_button.clicked.connect(lambda: self.dnx.goto_clamp1("home"))
         clamp1_homepos_box.addWidget(clamp1_homepos_button)
         clamp1_homepos_box.addWidget(clamp1_gohome_button)
         
         clamp1_go_box = QHBoxLayout()
         clamp1_tighten45_button = QPushButton("Tighten 45°")
-        clamp1_tighten45_button.clicked.connect(lambda: self.dnx.set_position(DXL5_ID, self.dnx.get_position(DXL5_ID) + 512))
+        clamp1_tighten45_button.clicked.connect(lambda: self.dnx.set_position(MOTOR5_ID, self.dnx.get_position(MOTOR5_ID) + 512, 1500))
         clamp1_loosen45_button = QPushButton("Loosen 45°")
-        clamp1_loosen45_button.clicked.connect(lambda: self.dnx.set_position(DXL5_ID, self.dnx.get_position(DXL5_ID) - 512))
+        clamp1_loosen45_button.clicked.connect(lambda: self.dnx.set_position(MOTOR5_ID, self.dnx.get_position(MOTOR5_ID) - 512, 1500))
         clamp1_tightin23_button = QPushButton("Tighten 23°")
-        clamp1_tightin23_button.clicked.connect(lambda: self.dnx.set_position(DXL5_ID, self.dnx.get_position(DXL5_ID) + 256))
+        clamp1_tightin23_button.clicked.connect(lambda: self.dnx.set_position(MOTOR5_ID, self.dnx.get_position(MOTOR5_ID) + 256, 1500))
         clamp1_loosen23_button = QPushButton("Loosen 23°")
-        clamp1_loosen23_button.clicked.connect(lambda: self.dnx.set_position(DXL5_ID, self.dnx.get_position(DXL5_ID) - 256))
+        clamp1_loosen23_button.clicked.connect(lambda: self.dnx.set_position(MOTOR5_ID, self.dnx.get_position(MOTOR5_ID) - 256, 1500))
         clamp1_go_box.addWidget(clamp1_tighten45_button)
         clamp1_go_box.addWidget(clamp1_loosen45_button)
         clamp1_go_box.addWidget(clamp1_tightin23_button)
@@ -244,7 +244,7 @@ class MainWindow(QWidget):
         clamp2_restpos_setbutton = QPushButton("Set")
         clamp2_restpos_setbutton.clicked.connect(lambda: self.dnx.define_restclamp2())
         clamp2_restpos_goto_button = QPushButton("Go To")
-        clamp2_restpos_goto_button.clicked.connect(lambda: self.dnx.set_clamp2("rest"))
+        clamp2_restpos_goto_button.clicked.connect(lambda: self.dnx.goto_clamp2("rest"))
         clamp2_restpos_box.addWidget(clamp2_restpos_label)
         clamp2_restpos_box.addWidget(self.clamp2_restpos_value)
         clamp2_restpos_box.addWidget(self.clamp2_absrestpos_value)
@@ -262,7 +262,7 @@ class MainWindow(QWidget):
         clamp2_lightpos_setbutton = QPushButton("Set")
         clamp2_lightpos_setbutton.clicked.connect(lambda: self.dnx.define_lightclamp2())
         clamp2_lightpos_goto_button = QPushButton("Go To")
-        clamp2_lightpos_goto_button.clicked.connect(lambda: self.dnx.set_clamp2("light"))
+        clamp2_lightpos_goto_button.clicked.connect(lambda: self.dnx.goto_clamp2("light"))
         clamp2_lightpos_box.addWidget(clamp2_lightpos_label)
         clamp2_lightpos_box.addWidget(self.clamp2_lightpos_value)
         clamp2_lightpos_box.addWidget(self.clamp2_abslightpos_value)
@@ -280,7 +280,7 @@ class MainWindow(QWidget):
         clamp2_mediumpos_setbutton = QPushButton("Set")
         clamp2_mediumpos_setbutton.clicked.connect(lambda: self.dnx.define_mediumclamp2())
         clamp2_mediumpos_goto_button = QPushButton("Go To")
-        clamp2_mediumpos_goto_button.clicked.connect(lambda: self.dnx.set_clamp2("medium"))
+        clamp2_mediumpos_goto_button.clicked.connect(lambda: self.dnx.goto_clamp2("medium"))
         clamp2_mediumpos_box.addWidget(clamp2_mediumpos_label)
         clamp2_mediumpos_box.addWidget(self.clamp2_mediumpos_value)
         clamp2_mediumpos_box.addWidget(self.clamp2_absmediumpos_value)
@@ -298,7 +298,7 @@ class MainWindow(QWidget):
         clamp2_heavypos_setbutton = QPushButton("Set")
         clamp2_heavypos_setbutton.clicked.connect(lambda: self.dnx.define_heavyclamp2())
         clamp2_heavypos_goto_button = QPushButton("Go To")
-        clamp2_heavypos_goto_button.clicked.connect(lambda: self.dnx.set_clamp2("heavy"))
+        clamp2_heavypos_goto_button.clicked.connect(lambda: self.dnx.goto_clamp2("heavy"))
         clamp2_heavypos_box.addWidget(clamp2_heavypos_label)
         clamp2_heavypos_box.addWidget(self.clamp2_heavypos_value)
         clamp2_heavypos_box.addWidget(self.clamp2_absheavypos_value)
@@ -314,19 +314,19 @@ class MainWindow(QWidget):
         clamp2_homepos_button = QPushButton("Perform Homing Routine")
         clamp2_homepos_button.clicked.connect(lambda: self.dnx.home_clamp2())
         clamp2_gohome_button = QPushButton("Go Home")
-        clamp2_gohome_button.clicked.connect(lambda: self.dnx.set_clamp2("home"))
+        clamp2_gohome_button.clicked.connect(lambda: self.dnx.goto_clamp2("home"))
         clamp2_homepos_box.addWidget(clamp2_homepos_button)
         clamp2_homepos_box.addWidget(clamp2_gohome_button)
         
         clamp2_go_box = QHBoxLayout()
         clamp2_tighten45_button = QPushButton("Tighten 45°")
-        clamp2_tighten45_button.clicked.connect(lambda: self.dnx.set_position(DXL6_ID, self.dnx.get_position(DXL6_ID) + 512))
+        clamp2_tighten45_button.clicked.connect(lambda: self.dnx.set_position(MOTOR6_ID, self.dnx.get_position(MOTOR6_ID) + 512, 1500))
         clamp2_loosen45_button = QPushButton("Loosen 45°")
-        clamp2_loosen45_button.clicked.connect(lambda: self.dnx.set_position(DXL6_ID, self.dnx.get_position(DXL6_ID) - 512))
+        clamp2_loosen45_button.clicked.connect(lambda: self.dnx.set_position(MOTOR6_ID, self.dnx.get_position(MOTOR6_ID) - 512, 1500))
         clamp2_tightin23_button = QPushButton("Tighten 23°")
-        clamp2_tightin23_button.clicked.connect(lambda: self.dnx.set_position(DXL6_ID, self.dnx.get_position(DXL6_ID) + 256))
+        clamp2_tightin23_button.clicked.connect(lambda: self.dnx.set_position(MOTOR6_ID, self.dnx.get_position(MOTOR6_ID) + 256, 1500))
         clamp2_loosen23_button = QPushButton("Loosen 23°")
-        clamp2_loosen23_button.clicked.connect(lambda: self.dnx.set_position(DXL6_ID, self.dnx.get_position(DXL6_ID) - 256))
+        clamp2_loosen23_button.clicked.connect(lambda: self.dnx.set_position(MOTOR6_ID, self.dnx.get_position(MOTOR6_ID) - 256, 1500))
         clamp2_go_box.addWidget(clamp2_tighten45_button)
         clamp2_go_box.addWidget(clamp2_loosen45_button)
         clamp2_go_box.addWidget(clamp2_tightin23_button)
@@ -353,11 +353,11 @@ class MainWindow(QWidget):
         
         clampconfig_box = QHBoxLayout()
         moveLR_button = QPushButton("Move Left/Right")
-        moveLR_button.clicked.connect(lambda: self.dnx.set_movingLR())
+        moveLR_button.clicked.connect(lambda: self.dnx.moving_1or3())
         moveTB_button = QPushButton("Move Top/Bottom")
-        moveTB_button.clicked.connect(lambda: self.dnx.set_movingTB())
+        moveTB_button.clicked.connect(lambda: self.dnx.moving_2or4())
         movehalf_button = QPushButton("Move Halves/All")
-        movehalf_button.clicked.connect(lambda: self.dnx.set_movingHalf())
+        movehalf_button.clicked.connect(lambda: self.dnx.moving_Halves())
         clampconfig_box.addWidget(moveLR_button)
         clampconfig_box.addWidget(moveTB_button)
         clampconfig_box.addWidget(movehalf_button)
@@ -404,15 +404,15 @@ class MainWindow(QWidget):
         pos_value.setReadOnly(True)
         pos_box.addWidget(pos_label)
         pos_box.addWidget(pos_value)
-        if motor_id == DXL1_ID:
+        if motor_id == MOTOR1_ID:
             self.motor1_pos_value = pos_value
-        elif motor_id == DXL2_ID:
+        elif motor_id == MOTOR2_ID:
             self.motor2_pos_value = pos_value
-        elif motor_id == DXL3_ID:
+        elif motor_id == MOTOR3_ID:
             self.motor3_pos_value = pos_value
-        elif motor_id == DXL4_ID:
+        elif motor_id == MOTOR4_ID:
             self.motor4_pos_value = pos_value
-        elif motor_id == DXL5_ID:
+        elif motor_id == MOTOR5_ID:
             self.motor5_pos_value = pos_value
         else:
             self.motor6_pos_value = pos_value
@@ -424,15 +424,15 @@ class MainWindow(QWidget):
         voltage_value.setReadOnly(True)
         voltage_box.addWidget(voltage_label)
         voltage_box.addWidget(voltage_value)
-        if motor_id == DXL1_ID:
+        if motor_id == MOTOR1_ID:
             self.motor1_voltage_value = voltage_value
-        elif motor_id == DXL2_ID:
+        elif motor_id == MOTOR2_ID:
             self.motor2_voltage_value = voltage_value
-        elif motor_id == DXL3_ID:
+        elif motor_id == MOTOR3_ID:
             self.motor3_voltage_value = voltage_value
-        elif motor_id == DXL4_ID:
+        elif motor_id == MOTOR4_ID:
             self.motor4_voltage_value = voltage_value
-        elif motor_id == DXL5_ID:
+        elif motor_id == MOTOR5_ID:
             self.motor5_voltage_value = voltage_value
         else:
             self.motor6_voltage_value = voltage_value
@@ -444,15 +444,15 @@ class MainWindow(QWidget):
         current_value.setReadOnly(True)
         current_box.addWidget(current_label)
         current_box.addWidget(current_value)
-        if motor_id == DXL1_ID:
+        if motor_id == MOTOR1_ID:
             self.motor1_current_value = current_value
-        elif motor_id == DXL2_ID:
+        elif motor_id == MOTOR2_ID:
             self.motor2_current_value = current_value
-        elif motor_id == DXL3_ID:
+        elif motor_id == MOTOR3_ID:
             self.motor3_current_value = current_value
-        elif motor_id == DXL4_ID:
+        elif motor_id == MOTOR4_ID:
             self.motor4_current_value = current_value
-        elif motor_id == DXL5_ID:
+        elif motor_id == MOTOR5_ID:
             self.motor5_current_value = current_value
         else:
             self.motor6_current_value = current_value
@@ -464,15 +464,15 @@ class MainWindow(QWidget):
         temp_value.setReadOnly(True)
         temp_box.addWidget(temp_label)
         temp_box.addWidget(temp_value)
-        if motor_id == DXL1_ID:
+        if motor_id == MOTOR1_ID:
             self.motor1_temp_value = temp_value
-        elif motor_id == DXL2_ID:
+        elif motor_id == MOTOR2_ID:
             self.motor2_temp_value = temp_value
-        elif motor_id == DXL3_ID:
+        elif motor_id == MOTOR3_ID:
             self.motor3_temp_value = temp_value
-        elif motor_id == DXL4_ID:
+        elif motor_id == MOTOR4_ID:
             self.motor4_temp_value = temp_value
-        elif motor_id == DXL5_ID:
+        elif motor_id == MOTOR5_ID:
             self.motor5_temp_value = temp_value
         else:
             self.motor6_temp_value = temp_value
@@ -495,7 +495,7 @@ class MainWindow(QWidget):
         return True
 
     def update_values(self):
-        for i, motor_id in enumerate([DXL1_ID, DXL2_ID, DXL3_ID, DXL4_ID]):
+        for i, motor_id in enumerate([MOTOR1_ID, MOTOR2_ID, MOTOR3_ID, MOTOR4_ID]):
             switch = self.motor_switches[i]
             if switch.isChecked() != getattr(self, f'motor{i+1}_switch_last', None):
                 setattr(self, f'motor{i+1}_switch_last', switch.isChecked())
@@ -511,22 +511,22 @@ class MainWindow(QWidget):
             if switch.isChecked() != getattr(self, 'motor5_switch_last', None):
                 self.motor5_switch_last = switch.isChecked()
                 if switch.isChecked():
-                    self.dnx.enable_torque(DXL5_ID)
+                    self.dnx.enable_torque(MOTOR5_ID)
                 else:
-                    self.dnx.disable_torque(DXL5_ID)
-            self.dnx.set_velocity(DXL5_ID, int(self.motor_vel_values[4].text()))
+                    self.dnx.disable_torque(MOTOR5_ID)
+            self.dnx.set_velocity(MOTOR5_ID, int(self.motor_vel_values[4].text()))
             
         if self.clamp2_keymove:
             switch = self.motor_switches[5]
             if switch.isChecked() != getattr(self, 'motor6_switch_last', None):
                 self.motor6_switch_last = switch.isChecked()
                 if switch.isChecked():
-                    self.dnx.enable_torque(DXL6_ID)
+                    self.dnx.enable_torque(MOTOR6_ID)
                 else:
-                    self.dnx.disable_torque(DXL6_ID)
-            self.dnx.set_velocity(DXL6_ID, int(self.motor_vel_values[5].text()))
+                    self.dnx.disable_torque(MOTOR6_ID)
+            self.dnx.set_velocity(MOTOR6_ID, int(self.motor_vel_values[5].text()))
 
-        for i, motor_id in enumerate([DXL1_ID, DXL2_ID, DXL3_ID, DXL4_ID, DXL5_ID, DXL6_ID]):
+        for i, motor_id in enumerate([MOTOR1_ID, MOTOR2_ID, MOTOR3_ID, MOTOR4_ID, MOTOR5_ID, MOTOR6_ID]):
             pos_value = getattr(self, f'motor{i+1}_pos_value')
             voltage_value = getattr(self, f'motor{i+1}_voltage_value')
             current_value = getattr(self, f'motor{i+1}_current_value')
@@ -564,21 +564,21 @@ class MainWindow(QWidget):
         boost_multiplier = 3 if event.modifiers() & Qt.ShiftModifier else 1
         adjusted_speed = int(speed_value * boost_multiplier)
 
-        if event.key() == Qt.Key_Q:
-            self.motor_vel_values[0].setText(str(-adjusted_speed))
-        elif event.key() == Qt.Key_W:
+        if event.key() == Qt.Key_R:
             self.motor_vel_values[0].setText(str(adjusted_speed))
+        elif event.key() == Qt.Key_E:
+            self.motor_vel_values[0].setText(str(-adjusted_speed))
         elif event.key() == Qt.Key_S:
             self.motor_vel_values[1].setText(str(adjusted_speed))
         elif event.key() == Qt.Key_A:
             self.motor_vel_values[1].setText(str(-adjusted_speed))
-        elif event.key() == Qt.Key_R:
-            self.motor_vel_values[2].setText(str(adjusted_speed))
-        elif event.key() == Qt.Key_E:
-            self.motor_vel_values[2].setText(str(-adjusted_speed))
         elif event.key() == Qt.Key_F:
-            self.motor_vel_values[3].setText(str(adjusted_speed))
+            self.motor_vel_values[2].setText(str(adjusted_speed))
         elif event.key() == Qt.Key_D:
+            self.motor_vel_values[2].setText(str(-adjusted_speed))
+        elif event.key() == Qt.Key_W:
+            self.motor_vel_values[3].setText(str(adjusted_speed))
+        elif event.key() == Qt.Key_Q:
             self.motor_vel_values[3].setText(str(-adjusted_speed))
         elif event.key() == Qt.Key_N:
             self.motor_vel_values[0].setText(str(-adjusted_speed))
@@ -590,6 +590,7 @@ class MainWindow(QWidget):
             self.motor_vel_values[1].setText(str(adjusted_speed))
             self.motor_vel_values[2].setText(str(adjusted_speed))
             self.motor_vel_values[3].setText(str(adjusted_speed))
+            
         elif event.key() == Qt.Key_T:
             self.motor_switches[0].toggle()
         elif event.key() == Qt.Key_Y:
@@ -613,29 +614,27 @@ class MainWindow(QWidget):
             self.motor_vel_values[5].setText(str(CLAMP_KEY_SPEED))
             
         elif event.key() == Qt.Key_0:
-            self.dnx.set_clamp1("home")
-            self.dnx.set_clamp2("home")
+            self.dnx.goto_clamp_home()
         elif event.key() == Qt.Key_1:
-            self.dnx.set_movingLR()
+            self.dnx.moving_1or3()
         elif event.key() == Qt.Key_2:
-            self.dnx.set_movingTB()
+            self.dnx.moving_2or4()
         elif event.key() == Qt.Key_3:
-            self.dnx.set_movingHalf()
+            self.dnx.moving_Halves()
         elif event.key() == Qt.Key_4:
-            self.dnx.set_clamp1("rest")
-            self.dnx.set_clamp2("rest")
+            self.dnx.goto_clamp_rest()
             
         elif event.key() == Qt.Key_Escape:
             QApplication.quit()
 
     def keyReleaseEvent(self, event):
-        if event.key() in [Qt.Key_Q, Qt.Key_W]:
+        if event.key() in [Qt.Key_R, Qt.Key_E]:
             self.motor_vel_values[0].setText('0')
-        elif event.key() in [Qt.Key_A, Qt.Key_S]:
+        elif event.key() in [Qt.Key_S, Qt.Key_A]:
             self.motor_vel_values[1].setText('0')
-        elif event.key() in [Qt.Key_E, Qt.Key_R]:
+        elif event.key() in [Qt.Key_F, Qt.Key_D]:
             self.motor_vel_values[2].setText('0')
-        elif event.key() in [Qt.Key_D, Qt.Key_F]:
+        elif event.key() in [Qt.Key_W, Qt.Key_Q]:
             self.motor_vel_values[3].setText('0')
         elif event.key() in [Qt.Key_M, Qt.Key_N]:
             self.motor_vel_values[0].setText('0')
@@ -644,20 +643,20 @@ class MainWindow(QWidget):
             self.motor_vel_values[3].setText('0')
         elif event.key() in [Qt.Key_BracketLeft, Qt.Key_BracketRight]:
             self.motor_vel_values[4].setText('0')
-            self.dnx.set_velocity(DXL5_ID, 0)
+            self.dnx.set_velocity(MOTOR5_ID, 0)
             self.clamp1_keymove = False
         elif event.key() in [Qt.Key_Semicolon, Qt.Key_Apostrophe]:
             self.motor_vel_values[5].setText('0')
-            self.dnx.set_velocity(DXL6_ID, 0)
+            self.dnx.set_velocity(MOTOR6_ID, 0)
             self.clamp2_keymove = False
 
     def check_homed(self):
         motor5_homed = True
-        if abs(self.dnx.get_position(DXL5_ID)- self.dnx.clamp1_pos0) > 2:
+        if abs(self.dnx.get_position(MOTOR5_ID)- self.dnx.clamp1_pos0) > 2:
             print("Motor 5 not homed")
             motor5_homed = False
         motor6_homed = True
-        if abs(self.dnx.get_position(DXL6_ID)- self.dnx.clamp2_pos0) > 2:
+        if abs(self.dnx.get_position(MOTOR6_ID)- self.dnx.clamp2_pos0) > 2:
             print("Motor 6 not homed")
             motor6_homed = False
         return motor5_homed and motor6_homed
@@ -670,12 +669,12 @@ class MainWindow(QWidget):
             return
         if self.have_gamepad():
             self.gamepad_thread.terminate()
-        self.dnx.disable_torque(DXL1_ID)
-        self.dnx.disable_torque(DXL2_ID)
-        self.dnx.disable_torque(DXL3_ID)
-        self.dnx.disable_torque(DXL4_ID)
-        self.dnx.disable_torque(DXL5_ID)
-        self.dnx.disable_torque(DXL6_ID)
+        self.dnx.disable_torque(MOTOR1_ID)
+        self.dnx.disable_torque(MOTOR2_ID)
+        self.dnx.disable_torque(MOTOR3_ID)
+        self.dnx.disable_torque(MOTOR4_ID)
+        self.dnx.disable_torque(MOTOR5_ID)
+        self.dnx.disable_torque(MOTOR6_ID)
         self.dnx.close_port()
         QApplication.quit()
 

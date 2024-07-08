@@ -1,10 +1,10 @@
 {
-  "DXL1_ID": 2,
-  "DXL2_ID": 3,
-  "DXL3_ID": 1,
-  "DXL4_ID": 4,
-  "DXL5_ID": 10,
-  "DXL6_ID": 11,
+  "MOTOR1_ID": 1,
+  "MOTOR2_ID": 2,
+  "MOTOR3_ID": 3,
+  "MOTOR4_ID": 4,
+  "MOTOR5_ID": 10,
+  "MOTOR6_ID": 11,
   "BAUDRATE": 57600,
   "DEVICENAME": "COM3"
 }

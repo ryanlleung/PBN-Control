@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 
 src - backup/
+src/gamepad_test.py
+src/quadrant.png

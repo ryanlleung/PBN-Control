@@ -1,18 +1,18 @@
 
 import time
-from motor_ctrl.sync_dual import Dynamixel, DXL1_ID, DXL2_ID
+from motor_ctrl.sync_dual import Dynamixel2, MOTOR1_ID, MOTOR2_ID
 
 """
-Change configuration in in motor_ctrl/config.json (ignore DXL3_ID and DXL4_ID)
+Change configuration in in motor_ctrl/config_dual.json
 Make sure the Dynamixel port is not occupied by another software.
 Check motor_ctrl/sync_dual.py for more info.
 """
 
 #### DONT CHANGE START ####
-dnx = Dynamixel()
+dnx = Dynamixel2()
 dnx.open_port()
-dnx.enable_torque(DXL1_ID)
-dnx.enable_torque(DXL2_ID)
+dnx.enable_torque(MOTOR1_ID)
+dnx.enable_torque(MOTOR2_ID)
 ##### DONT CHANGE END #####
 
 
@@ -22,12 +22,12 @@ Position mode where the motor moves to a specified position.
 Set the profile velocity and acceleration of the motor when moving to a position.
 """
 # Set the mode and velocity during motion
-dnx.set_mode(DXL1_ID, "extpos")
-dnx.set_mode(DXL2_ID, "extpos")
-dnx.set_profile_velocity(DXL1_ID, 33) # Set the profile velocity of the motor, 1 mm/s = 3.33 unit/s
-dnx.set_profile_velocity(DXL2_ID, 33) # Set the profile velocity of the motor, 1 mm/s = 3.33 unit/s
-dnx.home_position(DXL1_ID)
-dnx.home_position(DXL2_ID)
+dnx.set_mode(MOTOR1_ID, "extpos")
+dnx.set_mode(MOTOR2_ID, "extpos")
+dnx.set_profile_velocity(MOTOR1_ID, 33) # Set the profile velocity of the motor, 1 mm/s = 3.33 unit/s
+dnx.set_profile_velocity(MOTOR2_ID, 33) # Set the profile velocity of the motor, 1 mm/s = 3.33 unit/s
+dnx.home_position(MOTOR1_ID)
+dnx.home_position(MOTOR2_ID)
 
 ## Using absolute positions ##
 print(f"\nAbsolute Positions Demo \nInitial Abs Positions: {dnx.motor1_pos0}, {dnx.motor2_pos0}")
@@ -76,7 +76,7 @@ time.sleep(5)
 print("\nDemo completed")
 
 ##### DONT CHANGE START #####
-dnx.disable_torque(DXL1_ID)
-dnx.disable_torque(DXL2_ID)
+dnx.disable_torque(MOTOR1_ID)
+dnx.disable_torque(MOTOR2_ID)
 dnx.close_port()
 ##### DONT CHANGE END #####

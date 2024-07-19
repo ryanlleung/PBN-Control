@@ -45,7 +45,7 @@ For clamp control:
 ## Arduino Library Installation
 The optical encoders used are the PMW3360 Motion Sensor from Joe's Sensors and Sundry, available from https://www.tindie.com/products/citizenjoe/pmw3360-motion-sensor/.
 
-The optical encoders are controlled by Arduino Uno with Serial Peripheral Interface, using a library based on https://github.com/SunjunKim/PMW3360_Arduino by Kim Sunjun. From this repository copy the src/opt_ctrl/installation/AdvMouse/ to your Arduino library folder. Then load the .ino file onto the Arduino using the Arduino IDE.
+The optical encoders are controlled by Arduino Uno with Serial Peripheral Interface, using a library based on https://github.com/SunjunKim/PMW3360_Arduino by Kim Sunjun. From this repository copy the arduino/installation/AdvMouse/ to your Arduino library folder. Then load the .ino file onto the Arduino using the Arduino IDE.
 
 This is the wiring diagram for the optical encoders with an Arduino Uno:
 ![alt text](https://github.com/ryanlleung/PBN-Control/blob/main/images/wiring.png "Wiring Diagram")

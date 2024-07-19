@@ -11,7 +11,7 @@ import time
 import keyboard
 
 # Open the serial port
-PORT_NAME = 'COM6' # Change the COM port to match your Arduino
+PORT_NAME = 'COM10' # Change the COM port to match your Arduino
 serialCom = serial.Serial(PORT_NAME, 9600)
 
 # Reset the Arduino

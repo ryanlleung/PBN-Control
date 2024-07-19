@@ -2,12 +2,9 @@
 This repository contains code for controlling PBNs (programmable bevel-tip needles) using Dynamixel motors. The code is written in Python and uses the Dynamixel SDK Python API to communicate with the motors. The GUIs are written in Python using the PyQt5 library.
 
 # Installation
-## Prerequisites
-- Python 3.10
-
-## Installation
-1. Clone the repository
-2. In your project folder, install the required packages using pip.
+1. Install Python 3.10 from https://www.python.org/downloads/ 
+2. Clone the repository and setup your Python environment.
+3. Navigate to your project folder and install the required packages using pip.
 ```bash
 pip install -r requirements.txt
 ```
@@ -76,11 +73,13 @@ PMW3360DM_Burst/ contains code for the Arduino to read the optical sensors in bu
 
 PMW3360DM_Camera/ contains code for the Arduino to read the optical sensors in camera mode. Camera mode outputs continuously a serial line of ravelled pixel values for a sensor in the 36x36 sensor array.
 
-In src/opt_ctrl:
+In src/opten_ctrl:
 
 Files beginning with opt_ contains low-level functions for reading the optical sensors using the Arduino.
 
-read_burst.py reads the optical sensors
+read_burst.py reads an optical sensor in burst mode and prints the aggragated "dx, dy" values.
+
+plot_camera.py reads the an optical sensor in camera mode and plots an image detected by the sensor array continuously, with a save image option.
 
 ## GUI
 In src/ The files beginning with gui_ are for the GUI interface for monitoring and controlling the motors.

@@ -41,5 +41,5 @@ The optical encoders are controlled by Arduino Uno with Serial Peripheral Interf
 
 The GUI interface is written in Python and uses the PySerial library to communicate with the Arduino.
 
-https://github.com/ryanlleung/PBN-Control/blob/main/images/wiring.png
+![alt text](https://github.com/ryanlleung/PBN-Control/blob/main/images/wiring.png "Wiring Diagram")
 

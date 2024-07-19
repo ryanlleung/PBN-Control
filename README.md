@@ -35,11 +35,48 @@ For clamp control:
 
 # Optical Sensors
 ## Arduino Library Installation
-The optical encoders used are the PMW3360 Motion Sensor from Joe's Sensors and Sundry, available from https://www.tindie.com/products/citizenjoe/pmw3360-motion-sensor/. 
+The optical encoders used are the PMW3360 Motion Sensor from Joe's Sensors and Sundry, available from https://www.tindie.com/products/citizenjoe/pmw3360-motion-sensor/.
 
-The optical encoders are controlled by Arduino Uno with Serial Peripheral Interface, using a library based on https://github.com/SunjunKim/PMW3360_Arduino. From this repository copy the opten/installation/AdvMouse/ to your Arduino library folder. Then load the .ino file onto the Arduino using the Arduino IDE.
+The optical encoders are controlled by Arduino Uno with Serial Peripheral Interface, using a library based on https://github.com/SunjunKim/PMW3360_Arduino by Kim Sunjun. From this repository copy the src/opt_ctrl/installation/AdvMouse/ to your Arduino library folder. Then load the .ino file onto the Arduino using the Arduino IDE.
 
-The GUI interface is written in Python and uses the PySerial library to communicate with the Arduino.
-
+This is the wiring diagram for the optical encoders with an Arduino Uno:
 ![alt text](https://github.com/ryanlleung/PBN-Control/blob/main/images/wiring.png "Wiring Diagram")
+
+
+# Repository Structure
+## Motor Control
+In src/motor_ctrl:
+
+Files beginning with sync_ contains low-level functions for controlling multiple motors simultaneously using the Dynamixel API.
+
+- sync_dual.py: For 2-segment needle control
+- sync_quad.py: For 4-segment needle control
+- sync_clamp.py: For 4-segment needle with clamps control
+- *sync_trio.py: Demo for catheter control with 3 motors
+
+Before running the sync_ files, make sure the motors are powered and connected to the computer, the motor IDs and motor controller device name are set in src/motor_ctrl/config_<SETUP>.json.
+
+## Optical Sensor Interfacing
+The PySerial library to read serial output from the Arduino boards. Make sure the correct code is loaded onto the Arduino board when running the Python scripts.
+
+In arduino/:
+
+PMW3360DM_Burst/ contains code for the Arduino to read the optical sensors in burst mode. Burst mode outputs a serial line of "dx, dy" values for a sensor when movement is detected. 
+
+PMW3360DM_Camera/ contains code for the Arduino to read the optical sensors in camera mode. Camera mode outputs continuously a serial line of ravelled pixel values for a sensor in the 36x36 sensor array.
+
+In src/opt_ctrl:
+
+Files beginning with opt_ contains low-level functions for reading the optical sensors using the Arduino.
+
+read_burst.py reads the optical sensors
+
+## GUI
+In src/ The files beginning with gui_ are for the GUI interface for monitoring and controlling the motors.
+
+The GUI interface is written in Python and uses 
+
+...
+
+
 

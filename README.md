@@ -1,9 +1,20 @@
 # PBN-Control
 This repository contains code for controlling PBNs (programmable bevel-tip needles) using Dynamixel motors. The code is written in Python and uses the Dynamixel SDK Python API to communicate with the motors. The GUIs are written in Python using the PyQt5 library.
 
+# Installation
+## Prerequisites
+- Python 3.10
+
+## Installation
+1. Clone the repository
+2. In your project folder, install the required packages using pip.
+```bash
+pip install -r requirements.txt
+```
+
 # Motors
 ## Dynamixel SDK Installation
-Please follow the instructions here to install DynamixelSDK for Windows Python. Python 3.10 is used in this project.
+Please follow the instructions here to install DynamixelSDK for Windows Python.
 https://github.com/ROBOTIS-GIT/DynamixelSDK
 https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/library_setup/python_windows/#python-windows
 

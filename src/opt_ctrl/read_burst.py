@@ -1,4 +1,11 @@
 
+"""
+Script to read the output of the Arduino and print aggregated the x and y values.
+Make sure PMW3360DM_Burst is uploaded to the Arduino before running this script.
+Change the PORT_NAME to match the device name of the Arduino.
+Press 'q' to exit the program.
+"""
+
 import serial
 import time
 import keyboard

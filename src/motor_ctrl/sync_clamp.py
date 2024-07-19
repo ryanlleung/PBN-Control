@@ -481,7 +481,7 @@ class Dynamixel6:
     
     #### Autohome ####
     
-    def home_clamp1(self, current_limit=35):
+    def home_clamp1(self, current_limit=36):
         while True:
             self.set_velocity(MOTOR5_ID, -50)
             current_current = abs(self.get_current(MOTOR5_ID))

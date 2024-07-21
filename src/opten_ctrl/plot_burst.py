@@ -1,6 +1,10 @@
+"""
+Script to plot the XY position of 1 to 4 optical encoders in real-time.
+Make sure PMW3360DM_Burst are uploaded to all connected Arduino before running this script.
+Change src/opten_ctrl/opten_config.json to match the device name of the Arduino boards.
+"""
 
 import sys
-
 import pyqtgraph as pg
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -40,13 +44,13 @@ class SerialPlotter(QMainWindow):
         self.graphWidget.addLegend()
 
         if self.serial_reader1 is not None:
-            self.plotData1 = self.graphWidget.plot([], [], pen=None, symbol='x', symbolSize=10, symbolBrush=('r'), name="COM5")
+            self.plotData1 = self.graphWidget.plot([], [], pen=None, symbol='x', symbolSize=10, symbolBrush=('r'), name=self.serial_reader1.serialCom.name)
         if self.serial_reader2 is not None:
-            self.plotData2 = self.graphWidget.plot([], [], pen=None, symbol='x', symbolSize=10, symbolBrush=('b'), name="COM6")
+            self.plotData2 = self.graphWidget.plot([], [], pen=None, symbol='x', symbolSize=10, symbolBrush=('b'), name=self.serial_reader2.serialCom.name)
         if self.serial_reader3 is not None:
-            self.plotData3 = self.graphWidget.plot([], [], pen=None, symbol='x', symbolSize=10, symbolBrush=('g'), name="COM7")
+            self.plotData3 = self.graphWidget.plot([], [], pen=None, symbol='x', symbolSize=10, symbolBrush=('g'), name=self.serial_reader3.serialCom.name)
         if self.serial_reader4 is not None:
-            self.plotData4 = self.graphWidget.plot([], [], pen=None, symbol='x', symbolSize=10, symbolBrush=('y'), name="COM8")
+            self.plotData4 = self.graphWidget.plot([], [], pen=None, symbol='x', symbolSize=10, symbolBrush=('y'), name=self.serial_reader4.serialCom.name)
         
         # Add a button to reset x and y values
         self.resetButton = QPushButton("Reset Position")
@@ -67,24 +71,24 @@ class SerialPlotter(QMainWindow):
         
         if self.serial_reader2 is not None:
             self.OPTEN2Box = QVBoxLayout()
-            self.xLabel2 = QLabel(f"COM6 X Position: {round(self.serial_reader2.x, 2)} mm")
-            self.yLabel2 = QLabel(f"COM6 Y Position: {round(self.serial_reader2.y, 2)} mm")
+            self.xLabel2 = QLabel(f"{self.serial_reader2.serialCom.name} X Position: {round(self.serial_reader2.x, 2)} mm")
+            self.yLabel2 = QLabel(f"{self.serial_reader2.serialCom.name} Y Position: {round(self.serial_reader2.y, 2)} mm")
             self.OPTEN2Box.addWidget(self.xLabel2)
             self.OPTEN2Box.addWidget(self.yLabel2)
             self.OPTENBox.addLayout(self.OPTEN2Box)
         
         if self.serial_reader3 is not None:
             self.OPTEN3Box = QVBoxLayout()
-            self.xLabel3 = QLabel(f"COM7 X Position: {round(self.serial_reader3.x, 2)} mm")
-            self.yLabel3 = QLabel(f"COM7 Y Position: {round(self.serial_reader3.y, 2)} mm")
+            self.xLabel3 = QLabel(f"{self.serial_reader3.serialCom.name} X Position: {round(self.serial_reader3.x, 2)} mm")
+            self.yLabel3 = QLabel(f"{self.serial_reader3.serialCom.name} Y Position: {round(self.serial_reader3.y, 2)} mm")
             self.OPTEN3Box.addWidget(self.xLabel3)
             self.OPTEN3Box.addWidget(self.yLabel3)
             self.OPTENBox.addLayout(self.OPTEN3Box)
         
         if self.serial_reader4 is not None:
             self.OPTEN4Box = QVBoxLayout()
-            self.xLabel4 = QLabel(f"COM8 X Position: {round(self.serial_reader4.x, 2)} mm")
-            self.yLabel4 = QLabel(f"COM8 Y Position: {round(self.serial_reader4.y, 2)} mm")
+            self.xLabel4 = QLabel(f"{self.serial_reader4.serialCom.name} X Position: {round(self.serial_reader4.x, 2)} mm")
+            self.yLabel4 = QLabel(f"{self.serial_reader4.serialCom.name} Y Position: {round(self.serial_reader4.y, 2)} mm")
             self.OPTEN4Box.addWidget(self.xLabel4)
             self.OPTEN4Box.addWidget(self.yLabel4)
             self.OPTENBox.addLayout(self.OPTEN4Box)

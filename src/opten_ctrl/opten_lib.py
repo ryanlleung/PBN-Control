@@ -147,10 +147,10 @@ class Optical4:
             self.serial_reader1 = SerialReader(self.serial_com1, mode="burst")
             self.serial_reader1.start()
         if self.connections[self.port2]:
-            self.serial_reader2 = SerialReader(self.serial_com2, mode="burst", flip_x=True)
+            self.serial_reader2 = SerialReader(self.serial_com2, mode="burst", flip_x=True, flip_y=True)
             self.serial_reader2.start()
         if self.connections[self.port3]:
-            self.serial_reader3 = SerialReader(self.serial_com3, mode="burst", flip_y=True)
+            self.serial_reader3 = SerialReader(self.serial_com3, mode="burst")
             self.serial_reader3.start()
         if self.connections[self.port4]:
             self.serial_reader4 = SerialReader(self.serial_com4, mode="burst", flip_x=True, flip_y=True)

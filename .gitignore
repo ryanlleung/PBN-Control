@@ -164,3 +164,4 @@ cython_debug/
 src - backup/
 src/gamepad_test.py
 src/quadrant.png
+src/clamp_control_demo.py

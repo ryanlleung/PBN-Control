@@ -25,6 +25,7 @@ OPTEN4_ID = OPTEN_IDS["OPTEN4_ID"]
 
 BAUDRATE = 9600
 
+# Helper class to read and process the serial data from the optical encoders
 class SerialReader(QThread):
     
     def __init__(self, serial_com, mode="burst", flip_x=False, flip_y=False):
@@ -75,8 +76,8 @@ class SerialReader(QThread):
                 if self.flip_y:
                     dy = -dy
                 with self.lock:
-                    self.x += dx * 25.4 / self.dpi
-                    self.y += dy * 25.4 / self.dpi
+                    self.x += dx * 25.4 / self.dpi # Convert dpi to counts/mm
+                    self.y += dy * 25.4 / self.dpi # Convert dpi to counts/mm
                     
             elif self.mode == "camera":
                 raw = input_line.split(' ')
@@ -86,7 +87,7 @@ class SerialReader(QThread):
     def stop(self):
         self.running = False
         
-        
+# Class to initialise and close the communication with 4 optical encoders
 class Optical4:
     
     def __init__(self):
@@ -143,17 +144,18 @@ class Optical4:
             print("No optical encoders available")
             return False
         
+        # Positive x and y directions are defined by the orientation of the optical encoders, positive y is segment extension
         if self.connections[self.port1]:
-            self.serial_reader1 = SerialReader(self.serial_com1, mode="burst")
+            self.serial_reader1 = SerialReader(self.serial_com1, mode="burst") # Change configuration to flip x and y if needed
             self.serial_reader1.start()
         if self.connections[self.port2]:
-            self.serial_reader2 = SerialReader(self.serial_com2, mode="burst", flip_x=True, flip_y=True)
+            self.serial_reader2 = SerialReader(self.serial_com2, mode="burst", flip_x=True, flip_y=True) # Change configuration to flip x and y if needed
             self.serial_reader2.start()
         if self.connections[self.port3]:
-            self.serial_reader3 = SerialReader(self.serial_com3, mode="burst")
+            self.serial_reader3 = SerialReader(self.serial_com3, mode="burst") # Change configuration to flip x and y if needed
             self.serial_reader3.start()
         if self.connections[self.port4]:
-            self.serial_reader4 = SerialReader(self.serial_com4, mode="burst", flip_x=True, flip_y=True)
+            self.serial_reader4 = SerialReader(self.serial_com4, mode="burst", flip_x=True, flip_y=True) # Change configuration to flip x and y if needed
             self.serial_reader4.start()
             
         if self.connections[self.port1]:

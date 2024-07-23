@@ -16,64 +16,29 @@ dnx.enable_torque(MOTOR2_ID)
 ##### DONT CHANGE END #####
 
 
-#### Profile Velocity Demo ####
-"""
-Position mode where the motor moves to a specified position.
-Set the profile velocity and acceleration of the motor when moving to a position.
-"""
+#### Position Control Demo ####
+
 # Set the mode and velocity during motion
 dnx.set_mode(MOTOR1_ID, "extpos")
 dnx.set_mode(MOTOR2_ID, "extpos")
-dnx.set_profile_velocity(MOTOR1_ID, 33) # Set the profile velocity of the motor, 1 mm/s = 3.33 unit/s
-dnx.set_profile_velocity(MOTOR2_ID, 33) # Set the profile velocity of the motor, 1 mm/s = 3.33 unit/s
-dnx.home_position(MOTOR1_ID)
-dnx.home_position(MOTOR2_ID)
+dnx.set_profile_velocity(MOTOR1_ID, 33) # Set the profile velocity of the motor, 1 mm/s ~= 3.33 unit/s
+dnx.set_profile_velocity(MOTOR2_ID, 33) # Set the profile velocity of the motor, 1 mm/s ~= 3.33 unit/s
+dnx.define_position0(MOTOR1_ID) # Define the current position as 0
+dnx.define_position0(MOTOR2_ID) # Define the current position as 0
 
-## Using absolute positions ##
-print(f"\nAbsolute Positions Demo \nInitial Abs Positions: {dnx.motor1_pos0}, {dnx.motor2_pos0}")
+## Demo ##
+print(f"\nAbsolute Positions Demo \nInitial Abs Positions: {dnx.motor_pos0[MOTOR1_ID]}, {dnx.motor_pos0[MOTOR2_ID]}")
 time.sleep(1)
-
-motor1_pos1 = dnx.motor1_pos0 + 520
-motor2_pos1 = dnx.motor2_pos0 + 520
-dnx.set_dualpos(motor1_pos1, motor2_pos1)
+motor1_pos1 = dnx.motor_pos0[MOTOR1_ID] + 520   # 1 mm ~= 52 units
+motor2_pos1 = dnx.motor_pos0[MOTOR2_ID] + 520   # 1 mm ~= 52 units
+dnx.goto_dualpos(motor1_pos1, motor2_pos1)
 print(f"Moving to Abs Positions: {motor1_pos1}, {motor2_pos1}")
-time.sleep(5)
 
-motor1_pos2 = dnx.motor1_pos0
-motor2_pos2 = dnx.motor2_pos0
-dnx.set_dualpos(motor1_pos2, motor2_pos2)
+motor1_pos2 = dnx.motor_pos0[MOTOR1_ID]
+motor2_pos2 = dnx.motor_pos0[MOTOR2_ID] + 520
+dnx.goto_dualpos(motor1_pos2, motor2_pos2)
 print(f"Moving to Abs Positions: {motor1_pos2}, {motor2_pos2}")
-time.sleep(5)
 
-## Using relative positions ##
-print(f"\nRelative Positions Demo \nInitial Abs Positions: {dnx.motor1_pos0}, {dnx.motor2_pos0}")
-time.sleep(1)
-
-motor1_rpos1 = 200/52.5
-motor2_rpos1 = 200
-dnx.set_dualrpos(motor1_rpos1, motor2_rpos1)
-print(f"Moving to Rel Positions: {motor1_rpos1}, {motor2_rpos1}")
-time.sleep(5)
-
-motor1_rpos2 = 250
-motor2_rpos2 = 750
-dnx.set_dualrpos(motor1_rpos2, motor2_rpos2)
-print(f"Moving to Rel Positions: {motor1_rpos2}, {motor2_rpos2}")
-time.sleep(5)
-
-motor1_rpos3 = 500
-motor2_rpos3 = 500
-dnx.set_dualrpos(motor1_rpos3, motor2_rpos3)
-print(f"Moving to Rel Positions: {motor1_rpos3}, {motor2_rpos3}")
-time.sleep(5)
-
-motor1_rpos4 = -(motor1_rpos1 + motor1_rpos2 + motor1_rpos3)
-motor2_rpos4 = -(motor2_rpos1 + motor2_rpos2 + motor2_rpos3)
-dnx.set_dualrpos(motor1_rpos4, motor2_rpos4)
-print(f"Moving to Rel Positions: {motor1_rpos4}, {motor2_rpos4}")
-time.sleep(5)
-
-print("\nDemo completed")
 
 ##### DONT CHANGE START #####
 dnx.disable_torque(MOTOR1_ID)
